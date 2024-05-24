@@ -21,7 +21,7 @@ import Confer.Config.Types
 loadConfiguration :: (IOE :> es) => Eff es (Result (Vector Deployment))
 loadConfiguration= liftIO $ Lua.run $ do
   Lua.openlibs -- load the default Lua packages
-  apiLoadStatus <- Lua.dofile (Just "./lua/runtime/confer.lua")  -- load and run the program
+  apiLoadStatus <- Lua.dofile (Just "./runtime/lua/confer.lua")  -- load and run the program
   liftIO $ putStrLn $ "[+] API loaded: " <> show apiLoadStatus
   Lua.setglobal "confer"
   configLoadStatus <- Lua.dofile (Just "./doc/confer_example.lua")  -- load and run the program
@@ -29,34 +29,26 @@ loadConfiguration= liftIO $ Lua.run $ do
   Lua.runPeeker peekConfig Lua.top
 
 peekConfig :: Peeker Exception (Vector Deployment)
-peekConfig index = Lua.retrieving "config" $ do
-  result <- Vector.fromList <$> Lua.peekList peekDeployment index
-  traceShowM $ "[+] Configuration " <> show result
-  pure result
+peekConfig index = Lua.retrieving "config" $
+  Vector.fromList <$> Lua.peekList peekDeployment index
 
 peekDeployment :: Peeker Exception Deployment
 peekDeployment index = Lua.retrieving "deployment" $ do
-  hostname <- traceShowId <$> Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "hostname" index
-  architecture <- traceShowId <$> Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "architecture" index
-  os <- traceShowId <$> Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "os" index
-  facts <- traceShowId . Vector.fromList <$> Lua.peekFieldRaw (Lua.peekList peekFact) "facts" index
-  threadStatus <- Lua.liftLua $ Lua.status @Exception
+  hostname <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "hostname" index
+  architecture <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "architecture" index
+  os <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "os" index
+  facts <- Vector.fromList <$> Lua.peekFieldRaw (Lua.peekList peekFact) "facts" index
   let deployment = Deployment{..}
-  traceShowM $ "[+] peekDeployment status: " <> show threadStatus
-  traceShowM $ "[+] Deployment " <> show deployment
   pure deployment
 
 peekFact :: Peeker Exception Fact
 peekFact index = Lua.retrieving "fact" $ do
-  name <- Lua.peekFieldRaw (Lua.peekText) "name" index
-  source <- Lua.peekFieldRaw (peekOsPath) "source" index
-  destination <- Lua.peekFieldRaw (peekOsPath) "destination" index
-  threadStatus <- Lua.liftLua $ Lua.status @Exception
+  name <- Lua.peekFieldRaw Lua.peekText "name" index
+  source <- Lua.peekFieldRaw peekOsPath "source" index
+  destination <- Lua.peekFieldRaw peekOsPath "destination" index
   let fact = Fact{..}
-  traceShowM $ "[+] peekFact status: " <> show threadStatus
-  traceShowM $ "[+] Fact " <> show fact
   pure fact
-  
+
 peekOsPath :: Peeker Exception OsPath
 peekOsPath index = do
   result <- Lua.peekText index
