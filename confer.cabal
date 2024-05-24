@@ -1,0 +1,122 @@
+cabal-version:   3.6
+name:            confer
+version:         0.1.0.0
+synopsis:        The dotfiles manager
+
+-- description:
+license:         BSD-3-Clause
+license-file:    LICENSE
+author:          Théophile Choutri
+maintainer:      theophile@choutri.eu
+copyright:       2024 Théophile Choutri
+build-type:      Simple
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+tested-with:     GHC ==9.10.1
+
+flag release
+  description: Compile the project for release
+  default:     False
+  manual:      True
+
+common extensions
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DerivingVia
+    DuplicateRecordFields
+    LambdaCase
+    NoStarIsType
+    OverloadedRecordDot
+    OverloadedStrings
+    PackageImports
+    RecordWildCards
+    StrictData
+    TypeFamilies
+
+  default-language:   GHC2024
+
+common ghc-options
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+    -fhide-source-paths -Wno-unused-do-bind -fshow-hole-constraints
+    -Wno-unticked-promoted-constructors -Werror=unused-imports
+    -fdicts-strict -fmax-worker-args=16 -fspec-constr-recursive=16
+    -funbox-strict-fields
+
+  if flag(release)
+    ghc-options:
+      -flate-specialise -funbox-strict-fields
+      -finline-generics-aggressively -fexpose-all-unfoldings
+      -Werror=extended-warnings -Wunused-packages 
+
+common rts-options
+  ghc-options: -rtsopts -threaded "-with-rtsopts=-N -T"
+
+library
+  import:          extensions
+  import:          ghc-options
+
+  -- cabal-fmt: expand src/
+  exposed-modules:
+    Confer.Cmd.Check
+    Confer.Config.Evaluator
+    Confer.Config.Types
+    Confer.Effect.Symlink
+
+  build-depends:
+    , base
+    , effectful
+    , effectful-core
+    , hslua-aeson
+    , hslua-core
+    , hslua-marshalling
+    , directory
+    , aeson
+    , filepath
+    , placeholder
+    , text
+    , vector
+
+  if !flag(release)
+    build-depends:
+      placeholder
+
+  hs-source-dirs:  src
+
+executable confer
+  import:         extensions
+  import:         ghc-options
+  import:         rts-options
+  main-is:        Main.hs
+  build-depends:
+    , base
+    , confer
+    , effectful
+    , effectful-core
+    , optparse-applicative
+
+  if !flag(release)
+    build-depends:
+      placeholder
+
+  hs-source-dirs: app
+
+test-suite confer-test
+  import:         extensions
+  import:         ghc-options
+  import:         rts-options
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Main.hs
+
+  other-modules:
+  build-depends:
+    , base
+    , confer
+    , directory
+    , effectful-core
+    , filepath

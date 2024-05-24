@@ -1,0 +1,24 @@
+packages: ./
+
+active-repositories: hackage.haskell.org
+
+with-compiler: ghc-9.10
+
+test-show-details: direct
+
+documentation: True
+
+optimization: 2
+
+tests: True
+
+package *
+  ghc-options: +RTS -A32m -RTS -j -haddock
+
+allow-newer:
+  hslua-aeson:unordered-containers
+
+source-repository-package
+  type: git
+  location: https://github.com/ekmett/placeholder
+  tag: c958c36
