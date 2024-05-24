@@ -1,19 +1,23 @@
+
+local confer = require("confer")
+print(confer)
+
 local git_deployment = confer.fact({
   name = "git",
-  source = "./git",
-  destination = "~/"
+  source = ".gitconfig",
+  destination = ""
 })
 
 local zsh_deployment = confer.fact({
   name = "zsh",
-  source = "zsh",
-  destination = "~/"
+  source = ".zsh",
+  destination = ""
 })
 
 local kitty_deployment = confer.fact({
   name = "kitty",
   source = "./kitty",
-  destination = "~/.config/"
+  destination = ""
 })
 
 local laptop = confer.deploy({

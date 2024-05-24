@@ -51,7 +51,7 @@ common ghc-options
     ghc-options:
       -flate-specialise -funbox-strict-fields
       -finline-generics-aggressively -fexpose-all-unfoldings
-      -Werror=extended-warnings -Wunused-packages 
+      -Werror=extended-warnings -Wunused-packages
 
 common rts-options
   ghc-options: -rtsopts -threaded "-with-rtsopts=-N -T"
@@ -62,28 +62,33 @@ library
 
   -- cabal-fmt: expand src/
   exposed-modules:
+    Confer.API.Host
+    Confer.API.User
     Confer.Cmd.Check
     Confer.Config.Evaluator
     Confer.Config.Types
     Confer.Effect.Symlink
 
   build-depends:
+    , aeson
     , base
+    , directory
     , effectful
     , effectful-core
+    , filepath
+    , hostname
     , hslua-aeson
     , hslua-core
     , hslua-marshalling
-    , directory
-    , aeson
-    , filepath
+    , hslua-module-system
+    , hslua-packaging
     , placeholder
     , text
+    , text-display
     , vector
 
   if !flag(release)
-    build-depends:
-      placeholder
+    build-depends: placeholder
 
   hs-source-dirs:  src
 
@@ -100,8 +105,7 @@ executable confer
     , optparse-applicative
 
   if !flag(release)
-    build-depends:
-      placeholder
+    build-depends: placeholder
 
   hs-source-dirs: app
 
@@ -112,7 +116,6 @@ test-suite confer-test
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
   main-is:        Main.hs
-
   other-modules:
   build-depends:
     , base

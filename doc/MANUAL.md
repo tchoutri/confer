@@ -36,9 +36,9 @@ Display the help message.
 ### Configuration overrides
 
 #### `--arch=<arch>`
-  Override the detected architecturein the configuration file.
+Override the detected architecturein the configuration file.
 
-  With `arch` as:
+With `arch` as:
 
 * aarch64
 * x86_64
@@ -54,6 +54,36 @@ With `os` as:
 
 #### `--hostname=<hostname>`
 Override the host name detected in the configuration file.
+
+### CONFIGURATION
+
+The configuration is written in a Lua file with facts and deployement rules.
+
+To express a symbolic link of your `.gitconfig` file within your home directory, write:
+
+```lua
+local git_deployment = confer.fact({
+  -- The name of this fact.
+  name = "git",
+  -- The file or directory that you want to link.
+  source = ".gitconfig",
+  -- The directory in which the link will be made.
+  destination = "~/"
+})
+```
+Then we add a rule that holds potential conditions for this deployment to occur:
+The name of the host has to be `my-laptop`. If this condition is not met,
+the deployment will be ignored.
+
+```lua
+local laptop = confer.deploy({
+  hostname = "my-laptop",
+  facts = {
+    git_deployment,
+    },
+})
+
+```
 
 ### EXAMPLES
 
@@ -105,8 +135,9 @@ return {
 
 Confer provides its own utilities to be used in Lua:
 
+### Host API
 
-#### `confer.os`:
+#### `host.os`:
 The operating system identifier of the host.
 It is either inferred from your host, or overriden by the `--os` command-line option.
 
@@ -115,8 +146,8 @@ Possible values:
 * freebsd
 * linux
 * windows
-    
-#### `confer.arch`:
+ 
+#### `host.arch`:
 The architecture identifier of the host.
 It is either inferred from your host, or overriden by the `--arch` command-line option.
 
@@ -124,10 +155,16 @@ Possible values:
 * aarch64
 * x86_64
 
-#### `confer.hostname`
+#### `host.hostname`
 The hostname of the host.
 It is either inferred from your host, or overriden by the `--hostname` command-line option.
 
+### User API
+
+#### `user.home`
+The home directory of the current user.
+
+### Confer API
 
 #### `confer.deploy`
 A dictionary called `Deployment` that takes the following constructors:
