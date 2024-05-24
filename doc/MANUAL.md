@@ -97,7 +97,7 @@ local server = confer.deploy({
 
 return {
   laptop,
-  server
+  server;
 }
 ```
 
