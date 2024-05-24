@@ -45,7 +45,7 @@ common ghc-options
     -fhide-source-paths -Wno-unused-do-bind -fshow-hole-constraints
     -Wno-unticked-promoted-constructors -Werror=unused-imports
     -fdicts-strict -fmax-worker-args=16 -fspec-constr-recursive=16
-    -funbox-strict-fields
+    -funbox-strict-fields -Wno-unused-imports
 
   if flag(release)
     ghc-options:
