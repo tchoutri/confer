@@ -98,7 +98,7 @@ local git_deployment = confer.fact({
 
 local zsh_deployment = confer.fact({
   name = "zsh",
-  sources = {".zsh/", ".zshrc"},
+  source = ".zsh",
   destination = "~/"
 })
 

@@ -33,11 +33,13 @@ loadConfiguration = do
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
-    Lua.dofile (Just "./runtime/lua/confer.lua")
+    Lua.loadfile (Just "./runtime/lua/confer.lua")
+    Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule
     Lua.registerModule hostModule
     Lua.dofile (Just "./doc/confer_example.lua")
+      >>= \case {Lua.OK -> pure () ; _ -> Lua.throwErrorAsException}
     Lua.resultToEither <$> Lua.runPeeker peekConfig Lua.top
 
 peekConfig :: Peeker Exception (Vector Deployment)
@@ -46,25 +48,18 @@ peekConfig index = Lua.retrieving "config" $
 
 peekDeployment :: Peeker Exception Deployment
 peekDeployment index = Lua.retrieving "deployment" $ do
-  hostname <- Lua.retrieving "deployment.hostname" $
-    Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "hostname" index
-  architecture <- Lua.retrieving "deployment.architecture" $
-    Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "architecture" index
-  os <- Lua.retrieving "deployment.os" $
-    Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "os" index
-  facts <- Lua.retrieving "deployment.facts" $
-    Vector.fromList <$> Lua.peekFieldRaw (Lua.peekList peekFact) "facts" index
+  hostname <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "hostname" index
+  architecture <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "architecture" index
+  os <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "os" index
+  facts <- Vector.fromList <$> Lua.peekFieldRaw (Lua.peekList peekFact) "facts" index
   let deployment = Deployment{..}
   pure deployment
 
 peekFact :: Peeker Exception Fact
 peekFact index = Lua.retrieving "fact" $ do
-  name <- Lua.retrieving "fact.name" $
-    Lua.peekFieldRaw Lua.peekText "name" index
-  source <- Lua.retrieving "fact.source" $
-    Lua.peekFieldRaw peekOsPath "source" index
-  destination <- Lua.retrieving "fact.destination" $
-    Lua.peekFieldRaw peekOsPath "destination" index
+  name <- Lua.peekFieldRaw Lua.peekText "name" index
+  source <- Lua.peekFieldRaw peekOsPath "source" index
+  destination <- Lua.peekFieldRaw peekOsPath "destination" index
   let fact = Fact{..}
   pure fact
 
