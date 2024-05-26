@@ -1,4 +1,7 @@
-module Confer.Config.Evaluator ( loadConfiguration ) where
+module Confer.Config.Evaluator
+  ( loadConfiguration
+  , adjustConfiguration
+  ) where
 
 import Control.Monad (void)
 import Control.Placeholder
@@ -23,6 +26,16 @@ import Confer.Config.Types
 import Confer.API.Host qualified as API
 import Confer.API.User qualified as API
 
+adjustConfiguration 
+  :: DeploymentOS
+  -> DeploymentArchitecture
+  -> Vector Deployment
+  -> Vector Deployment
+adjustConfiguration os arch deployments =
+  Vector.filter (\d -> 
+    (d.os == AllOS || d.os == os) 
+      && (d.architecture == AllArchs || d.architecture == arch)) deployments
+
 loadConfiguration 
   :: ( IOE :> es
      , FileSystem :> es
@@ -33,7 +46,7 @@ loadConfiguration = do
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
-    Lua.loadfile (Just "./runtime/lua/confer.lua")
+    Lua.dofile (Just "./runtime/lua/confer.lua")
     Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule
@@ -49,8 +62,12 @@ peekConfig index = Lua.retrieving "config" $
 peekDeployment :: Peeker Exception Deployment
 peekDeployment index = Lua.retrieving "deployment" $ do
   hostname <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "hostname" index
-  architecture <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "architecture" index
-  os <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "os" index
+  architecture <-
+    maybeToDeploymentArchitecture 
+      <$> Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "architecture" index
+  os <-
+    maybeToDeploymentOS 
+      <$> Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "os" index
   facts <- Vector.fromList <$> Lua.peekFieldRaw (Lua.peekList peekFact) "facts" index
   let deployment = Deployment{..}
   pure deployment

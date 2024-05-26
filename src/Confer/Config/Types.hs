@@ -1,4 +1,11 @@
-module Confer.Config.Types where
+module Confer.Config.Types
+  ( Fact(..)
+  , Deployment(..)
+  , DeploymentOS(..)
+  , maybeToDeploymentOS
+  , DeploymentArchitecture(..)
+  , maybeToDeploymentArchitecture
+  ) where
 
 import Data.Text (Text)
 import Data.Text.Display
@@ -15,19 +22,36 @@ data Fact = Fact
   , source :: OsPath
   , destination :: OsPath
   }
-  deriving stock (Show, Eq, Generic)
+  deriving stock (Show, Eq)
 
 instance Display Fact where
   displayBuilder Fact{name, source, destination} = 
-    "[+] " 
-      <> (Builder.fromText name)
-      <> ": Linking to "
+      Builder.fromText name
+      <> " ~> "
       <> Builder.fromString (fromJust (OsPath.decodeUtf (destination </> source)))
 
 data Deployment = Deployment 
   { hostname :: Maybe Text
-  , architecture :: Maybe Text
-  , os :: Maybe Text
+  , architecture :: DeploymentArchitecture
+  , os :: DeploymentOS
   , facts :: Vector Fact
   }
-  deriving stock (Show, Eq, Generic)
+  deriving stock (Show, Eq)
+
+data DeploymentOS 
+  = AllOS
+  | OS Text
+  deriving stock (Show, Eq)
+
+maybeToDeploymentOS :: Maybe Text -> DeploymentOS
+maybeToDeploymentOS Nothing = AllOS
+maybeToDeploymentOS (Just t) = OS t
+
+data DeploymentArchitecture
+  = AllArchs
+  | Arch Text
+  deriving stock (Show, Eq)
+
+maybeToDeploymentArchitecture :: Maybe Text -> DeploymentArchitecture
+maybeToDeploymentArchitecture Nothing = AllArchs
+maybeToDeploymentArchitecture (Just t) = Arch t

@@ -22,7 +22,7 @@ mkHostModule = do
     , moduleOperations = []
     , moduleTypeInitializers = []
     , moduleDescription =
-        "Access to the system's information and file functionality."
+        "Access to informations about the host (name, operating system, architecture)"
     }
 
 -- | Module field containing the machine's hostname.

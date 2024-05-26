@@ -79,6 +79,8 @@ library
     , hostname
     , hslua-aeson
     , hslua-core
+    , validation-selective
+    , selective
     , hslua-marshalling
     , hslua-module-system
     , hslua-packaging
