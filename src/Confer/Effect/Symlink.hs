@@ -3,6 +3,8 @@ module Confer.Effect.Symlink
   , deleteSymlink
   , testSymlink
   , runSymlinkIO
+  , runSymlinkPure
+  , verifyExistingSymlink
   , Symlink(..)
   , SymlinkError(..)
   ) where
@@ -10,10 +12,13 @@ module Confer.Effect.Symlink
 import Control.Exception
 import Control.Monad
 import Control.Placeholder
+import Data.Map.Strict (Map)
+import Data.Map.Strict qualified as Map
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.FileSystem
 import Effectful.FileSystem qualified as FileSystem
+import Effectful.State.Static.Local qualified as State
 import System.Directory qualified as Directory
 import System.Directory.Internal (OsPath, FileType(..))
 import System.Directory.Internal qualified as Directory
@@ -23,6 +28,13 @@ import System.OsPath qualified as OsPath
 data SymlinkError
   = DoesNotExist OsPath
   | IsNotSymlink OsPath
+  | WrongTarget 
+      OsPath
+      -- ^ Path to the symbolic link
+      OsPath
+      -- ^ Expected target
+      OsPath
+      -- ^ Actual target
   deriving stock (Show, Eq)
 
 data Symlink :: Effect where
@@ -60,7 +72,7 @@ runSymlinkIO = interpret $ \_ -> \case
   DeleteSymlink _ -> todo
   TestSymlink target' -> do
     target <- liftIO $ OsPath.decodeFS target'
-    liftIO $ catch ( do
+    liftIO $ catch (do
       result <- Directory.pathIsSymbolicLink target
       if result 
       then pure $ Right ()
@@ -71,3 +83,32 @@ runSymlinkIO = interpret $ \_ -> \case
         then pure $ Left (DoesNotExist target')
         else pure $ Right ()
       )
+    
+runSymlinkPure
+  :: Map OsPath OsPath
+  -> Eff (Symlink : es) a
+  -> Eff es a
+runSymlinkPure virtualFS = reinterpret (State.evalState virtualFS) $ \_ -> \case
+  CreateSymlink source destination -> 
+    State.modify @(Map OsPath OsPath) (Map.insert source destination)
+  DeleteSymlink linkPath -> 
+    State.modify @(Map OsPath OsPath) (Map.delete linkPath)
+  TestSymlink linkPath -> State.gets @(Map OsPath OsPath) (Map.lookup linkPath) >>= \case
+    Just linkTarget -> pure $ Right ()
+    Nothing -> pure $ Left (DoesNotExist linkPath)
+
+verifyExistingSymlink 
+  :: (FileSystem :> es) 
+  => FilePath 
+  -> FilePath
+  -> Eff es (Either SymlinkError ())
+verifyExistingSymlink linkPath expectedLinkTarget = do
+  actualLinkTarget <- FileSystem.getSymbolicLinkTarget linkPath
+  if actualLinkTarget == expectedLinkTarget
+  then pure (Right ())
+  else pure $ Left
+    (WrongTarget
+      (OsPath.unsafeEncodeUtf linkPath)
+      (OsPath.unsafeEncodeUtf expectedLinkTarget)
+      (OsPath.unsafeEncodeUtf actualLinkTarget)
+    )

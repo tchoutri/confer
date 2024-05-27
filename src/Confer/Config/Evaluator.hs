@@ -1,6 +1,7 @@
 module Confer.Config.Evaluator
   ( loadConfiguration
   , adjustConfiguration
+  , processConfiguration
   ) where
 
 import Control.Monad (void)
@@ -18,6 +19,7 @@ import HsLua.Marshalling qualified as Lua
 import HsLua.Module.System qualified as Lua.System
 import HsLua.Packaging.Module qualified as Lua
 import System.IO (utf8, utf16le)
+import System.Info qualified as System
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 import System.OsPath.Encoding qualified as OsPath
@@ -40,8 +42,9 @@ loadConfiguration
   :: ( IOE :> es
      , FileSystem :> es
      )
-  => Eff es (Either String (Vector Deployment))
-loadConfiguration = do
+  => OsPath
+  -> Eff es (Either String (Vector Deployment))
+loadConfiguration pathToConfigFile = do
   userModule <- API.mkUserModule
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
@@ -51,7 +54,8 @@ loadConfiguration = do
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule
     Lua.registerModule hostModule
-    Lua.dofile (Just "./doc/confer_example.lua")
+    configFilePath <- liftIO $ OsPath.decodeFS pathToConfigFile
+    Lua.dofile (Just configFilePath)
       >>= \case {Lua.OK -> pure () ; _ -> Lua.throwErrorAsException}
     Lua.resultToEither <$> Lua.runPeeker peekConfig Lua.top
 
@@ -86,3 +90,21 @@ peekOsPath index = do
   case OsPath.encodeWith utf8 utf16le (Text.unpack result) of
     Right p -> pure p
     Left e -> fail $ OsPath.showEncodingException e
+
+processConfiguration 
+  :: ( IOE :> es
+     , FileSystem :> es
+     )
+  => OsPath
+  -> Eff es (Vector Deployment)
+processConfiguration pathToConfigFile = do
+  loadConfiguration pathToConfigFile >>= \case
+    Right allDeployments -> do
+      let currentOS = OS (Text.pack System.os)
+      let currentArch = Arch (Text.pack System.arch)
+      pure $ adjustConfiguration
+        currentOS
+        currentArch
+        allDeployments
+    Left e -> error e
+
