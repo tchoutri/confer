@@ -68,4 +68,4 @@ formatSymlinkError (DoesNotExist path) =
 formatSymlinkError (IsNotSymlink path) =
   "[!] "
     <> display (Text.pack . show $ path)
-    <> " is not a symbolic link!"
+    <> " is not a symbolic link"
