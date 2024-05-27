@@ -3,7 +3,10 @@ name:            confer
 version:         0.1.0.0
 synopsis:        The dotfiles manager
 
--- description:
+description:
+  Confer is a configuration file manager that symlinks your configuration files into their appropriate locations.
+  You can put your configuration files in version control and make them easily available to their applications.
+  
 license:         BSD-3-Clause
 license-file:    LICENSE
 author:          Théophile Choutri
@@ -13,6 +16,10 @@ build-type:      Simple
 extra-doc-files:
   CHANGELOG.md
   README.md
+  doc/*.md
+
+data-dir:
+  runtime/lua
 
 tested-with:     GHC ==9.10.1
 

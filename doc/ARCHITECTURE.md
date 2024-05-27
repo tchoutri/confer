@@ -28,6 +28,6 @@ All standard libraries of the Lua 5.4 interpreter are made available.
 *Confer* provides its own APIs to query the host machine's information and the current 
 users's information, like the home directory.
 
-The `confer` namespace is implemented in pure Lua.
+The `confer` namespace is implemented in pure Lua. It is distributed with `confer`.
 The `host` and `user` namespaces are implemented in Haskell and made available 
 to the Lua environment.
