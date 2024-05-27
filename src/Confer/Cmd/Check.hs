@@ -1,7 +1,11 @@
 module Confer.Cmd.Check (check) where
 
+import Control.Monad
+import Control.Placeholder
 import Data.Foldable
 import Data.Function
+import Data.List.NonEmpty
+import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as Text
 import Data.Text.Display
 import Data.Text.IO qualified as Text
@@ -9,15 +13,19 @@ import Effectful
 import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
 import System.Info qualified as System
-import System.OsPath ((</>))
+import System.OsPath ((</>), OsPath)
 import System.OsPath qualified as OsPath
+import Validation
 
 import Confer.Config.Evaluator
 import Confer.Config.Types
+import Confer.Effect.Symlink (Symlink, SymlinkError)
+import Confer.Effect.Symlink qualified as Symlink
 
 check
   :: ( IOE :> es
      , FileSystem :> es
+     , Symlink :> es
      )
   => Eff es ()
 check = do
@@ -26,10 +34,23 @@ check = do
         let currentOS = OS (Text.pack System.os)
         let currentArch = Arch (Text.pack System.arch)
         let deployments = adjustConfiguration currentOS currentArch allDeployments
-        forM_ deployments $ \deployment ->
-          forM_ deployment.facts $ \fact -> do
+        result <- sequenceA . join <$> mapM (\deployment ->
+          forM deployment.facts $ \fact -> do
             liftIO $ Text.putStrLn $ "[+] Checking " <> display fact
-            let osPath = fact.destination </> fact.source
-            filePath <- liftIO $ OsPath.decodeFS osPath
-            FileSystem.pathIsSymbolicLink filePath
+            validateSymlink fact) deployments
+        case result of
+          Failure errors->
+            liftIO $ print errors
+          Success _ -> pure ()
     Left e -> error e
+
+validateSymlink
+  :: (Symlink :> es)
+  => Fact
+  -> Eff es (Validation (NonEmpty SymlinkError) ())
+validateSymlink fact = do
+  let osPath = fact.destination </> fact.source
+  result <- Symlink.testSymlink osPath
+  case result of
+    Right _ -> pure $ Success ()
+    Left e -> pure $ Failure (NE.singleton e)
