@@ -10,6 +10,8 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Display
 import Data.Text.IO qualified as Text
+import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Effectful
 import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
@@ -26,28 +28,24 @@ import Confer.Effect.Symlink qualified as Symlink
 
 check
   :: ( IOE :> es
-     , FileSystem :> es
      , Symlink :> es
      )
-  => Eff es ()
-check = do
-  loadConfiguration >>= \case
-    Right allDeployments -> do
-        let currentOS = OS (Text.pack System.os)
-        let currentArch = Arch (Text.pack System.arch)
-        let deployments = adjustConfiguration currentOS currentArch allDeployments
-        result <- sequenceA . join <$> mapM (\deployment ->
-          forM deployment.facts $ \fact -> do
-            liftIO $ Text.putStrLn $ "[+] Checking " <> display fact
-            validateSymlink fact) deployments
-        case result of
-          Failure errors -> do
-            forM_ errors $
-              \e ->
-                liftIO $ Text.putStrLn $ formatSymlinkError e
-            liftIO System.exitFailure
-          Success _ -> pure ()
-    Left e -> error e
+  => Vector Deployment
+  -> Eff es ()
+check deployments = do
+  result <- mconcat . Vector.toList <$> do
+    let facts :: Vector Fact = foldMap (.facts) deployments
+    forM facts $ \fact -> do
+      liftIO $ Text.putStrLn $ "[+] Checking " <> display fact
+      validateSymlink fact
+  case result of
+    Failure errors -> do
+      forM_ errors $
+        \e ->
+          liftIO $ Text.putStrLn $ formatSymlinkError e
+      liftIO System.exitFailure
+    Success _ -> pure ()
+
 
 validateSymlink
   :: (Symlink :> es)
@@ -69,3 +67,10 @@ formatSymlinkError (IsNotSymlink path) =
   "[!] "
     <> display (Text.pack . show $ path)
     <> " is not a symbolic link"
+formatSymlinkError (WrongTarget linkPath expectedTarget actualTarget) =
+  "[!] "
+    <> display (Text.pack . show $ linkPath)
+    <> " points to "
+    <> display (Text.pack . show $ actualTarget)
+    <> " instead of pointing to "
+    <> display (Text.pack . show $ expectedTarget)
