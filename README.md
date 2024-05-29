@@ -4,6 +4,7 @@
 
 ## 📖 Documentation
 Read the [Manual](./doc/MANUAL.md) for documentation.
+
 For more details about the inner workings, read the [Architecture document](./doc/ARCHITECTURE.md)
 
 ## 📦 Install
