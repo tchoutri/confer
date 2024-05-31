@@ -2,7 +2,7 @@ packages: ./
 
 active-repositories: hackage.haskell.org
 
-with-compiler: ghc-9.10
+with-compiler: ghc-9.8
 
 test-show-details: direct
 

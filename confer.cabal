@@ -18,7 +18,7 @@ extra-doc-files:
   README.md
 
 data-dir:        runtime/lua
-tested-with:     GHC ==9.10.1
+tested-with:     GHC ==9.8.2
 
 flag release
   description: Compile the project for release
@@ -45,7 +45,7 @@ common extensions
     StrictData
     TypeFamilies
 
-  default-language:   GHC2024
+  default-language:   GHC2021
 
 common ghc-options
   ghc-options:

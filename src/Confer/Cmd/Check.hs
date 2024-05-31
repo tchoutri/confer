@@ -17,13 +17,13 @@ import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
 import System.Exit qualified as System
 import System.Info qualified as System
-import System.OsPath ((</>), OsPath)
+import System.OsPath (OsPath, (</>))
 import System.OsPath qualified as OsPath
 import Validation
 
 import Confer.Config.Evaluator
 import Confer.Config.Types
-import Confer.Effect.Symlink (Symlink, SymlinkError(..))
+import Confer.Effect.Symlink (Symlink, SymlinkError (..))
 import Confer.Effect.Symlink qualified as Symlink
 
 check
@@ -33,11 +33,12 @@ check
   => Vector Deployment
   -> Eff es ()
 check deployments = do
-  result <- mconcat . Vector.toList <$> do
-    let facts :: Vector Fact = foldMap (.facts) deployments
-    forM facts $ \fact -> do
-      liftIO $ Text.putStrLn $ "[+] Checking " <> display fact
-      validateSymlink fact
+  result <-
+    mconcat . Vector.toList <$> do
+      let facts :: Vector Fact = foldMap (.facts) deployments
+      forM facts $ \fact -> do
+        liftIO $ Text.putStrLn $ "[+] Checking " <> display fact
+        validateSymlink fact
   case result of
     Failure errors -> do
       forM_ errors $
@@ -46,9 +47,8 @@ check deployments = do
       liftIO System.exitFailure
     Success _ -> pure ()
 
-
 validateSymlink
-  :: (Symlink :> es)
+  :: Symlink :> es
   => Fact
   -> Eff es (Validation (NonEmpty SymlinkError) ())
 validateSymlink fact = do

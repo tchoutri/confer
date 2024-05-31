@@ -14,31 +14,34 @@ import Effectful
 import Effectful.FileSystem (FileSystem)
 import HsLua.Core (Exception)
 import HsLua.Core qualified as Lua
-import HsLua.Marshalling (Result, Peeker)
+import HsLua.Marshalling (Peeker, Result)
 import HsLua.Marshalling qualified as Lua
 import HsLua.Module.System qualified as Lua.System
 import HsLua.Packaging.Module qualified as Lua
-import System.IO (utf8, utf16le)
+import System.IO (utf16le, utf8)
 import System.Info qualified as System
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 import System.OsPath.Encoding qualified as OsPath
 
-import Confer.Config.Types
 import Confer.API.Host qualified as API
 import Confer.API.User qualified as API
+import Confer.Config.Types
 
-adjustConfiguration 
+adjustConfiguration
   :: DeploymentOS
   -> DeploymentArchitecture
   -> Vector Deployment
   -> Vector Deployment
 adjustConfiguration os arch deployments =
-  Vector.filter (\d -> 
-    (d.os == AllOS || d.os == os) 
-      && (d.architecture == AllArchs || d.architecture == arch)) deployments
+  Vector.filter
+    ( \d ->
+        (d.os == AllOS || d.os == os)
+          && (d.architecture == AllArchs || d.architecture == arch)
+    )
+    deployments
 
-loadConfiguration 
+loadConfiguration
   :: ( IOE :> es
      , FileSystem :> es
      )
@@ -56,21 +59,22 @@ loadConfiguration pathToConfigFile = do
     Lua.registerModule hostModule
     configFilePath <- liftIO $ OsPath.decodeFS pathToConfigFile
     Lua.dofile (Just configFilePath)
-      >>= \case {Lua.OK -> pure () ; _ -> Lua.throwErrorAsException}
+      >>= \case Lua.OK -> pure (); _ -> Lua.throwErrorAsException
     Lua.resultToEither <$> Lua.runPeeker peekConfig Lua.top
 
 peekConfig :: Peeker Exception (Vector Deployment)
-peekConfig index = Lua.retrieving "config" $
-  Vector.fromList <$> Lua.peekList peekDeployment index
+peekConfig index =
+  Lua.retrieving "config" $
+    Vector.fromList <$> Lua.peekList peekDeployment index
 
 peekDeployment :: Peeker Exception Deployment
 peekDeployment index = Lua.retrieving "deployment" $ do
   hostname <- Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "hostname" index
   architecture <-
-    maybeToDeploymentArchitecture 
+    maybeToDeploymentArchitecture
       <$> Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "architecture" index
   os <-
-    maybeToDeploymentOS 
+    maybeToDeploymentOS
       <$> Lua.peekFieldRaw (Lua.peekNilOr Lua.peekText) "os" index
   facts <- Vector.fromList <$> Lua.peekFieldRaw (Lua.peekList peekFact) "facts" index
   let deployment = Deployment{..}
@@ -91,7 +95,7 @@ peekOsPath index = do
     Right p -> pure p
     Left e -> fail $ OsPath.showEncodingException e
 
-processConfiguration 
+processConfiguration
   :: ( IOE :> es
      , FileSystem :> es
      )
@@ -102,9 +106,9 @@ processConfiguration pathToConfigFile = do
     Right allDeployments -> do
       let currentOS = OS (Text.pack System.os)
       let currentArch = Arch (Text.pack System.arch)
-      pure $ adjustConfiguration
-        currentOS
-        currentArch
-        allDeployments
+      pure $
+        adjustConfiguration
+          currentOS
+          currentArch
+          allDeployments
     Left e -> error e
-

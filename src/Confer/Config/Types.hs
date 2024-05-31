@@ -1,23 +1,23 @@
 module Confer.Config.Types
-  ( Fact(..)
-  , Deployment(..)
-  , DeploymentOS(..)
+  ( Fact (..)
+  , Deployment (..)
+  , DeploymentOS (..)
   , maybeToDeploymentOS
-  , DeploymentArchitecture(..)
+  , DeploymentArchitecture (..)
   , maybeToDeploymentArchitecture
   ) where
 
+import Data.Maybe
 import Data.Text (Text)
 import Data.Text.Display
+import Data.Text.Internal.Builder qualified as Builder
 import Data.Vector (Vector)
 import System.OsPath (OsPath, (</>))
-import Data.Maybe
-import Data.Text.Internal.Builder qualified as Builder
 import System.OsPath qualified as OsPath
 
 import GHC.Generics
 
-data Fact = Fact 
+data Fact = Fact
   { name :: Text
   , source :: OsPath
   , destination :: OsPath
@@ -25,12 +25,12 @@ data Fact = Fact
   deriving stock (Show, Eq)
 
 instance Display Fact where
-  displayBuilder Fact{name, source, destination} = 
-      Builder.fromText name
+  displayBuilder Fact{name, source, destination} =
+    Builder.fromText name
       <> " ~> "
       <> Builder.fromString (fromJust (OsPath.decodeUtf (destination </> source)))
 
-data Deployment = Deployment 
+data Deployment = Deployment
   { hostname :: Maybe Text
   , architecture :: DeploymentArchitecture
   , os :: DeploymentOS
@@ -38,7 +38,7 @@ data Deployment = Deployment
   }
   deriving stock (Show, Eq)
 
-data DeploymentOS 
+data DeploymentOS
   = AllOS
   | OS Text
   deriving stock (Show, Eq)

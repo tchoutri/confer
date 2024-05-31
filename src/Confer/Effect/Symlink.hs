@@ -1,12 +1,12 @@
-module Confer.Effect.Symlink 
+module Confer.Effect.Symlink
   ( createSymlink
   , deleteSymlink
   , testSymlink
   , runSymlinkIO
   , runSymlinkPure
   , verifyExistingSymlink
-  , Symlink(..)
-  , SymlinkError(..)
+  , Symlink (..)
+  , SymlinkError (..)
   ) where
 
 import Control.Exception
@@ -20,7 +20,7 @@ import Effectful.FileSystem
 import Effectful.FileSystem qualified as FileSystem
 import Effectful.State.Static.Local qualified as State
 import System.Directory qualified as Directory
-import System.Directory.Internal (OsPath, FileType(..))
+import System.Directory.Internal (FileType (..), OsPath)
 import System.Directory.Internal qualified as Directory
 import System.IO.Error
 import System.OsPath qualified as OsPath
@@ -28,7 +28,7 @@ import System.OsPath qualified as OsPath
 data SymlinkError
   = DoesNotExist OsPath
   | IsNotSymlink OsPath
-  | WrongTarget 
+  | WrongTarget
       OsPath
       -- ^ Path to the symbolic link
       OsPath
@@ -44,13 +44,13 @@ data Symlink :: Effect where
 
 type instance DispatchOf Symlink = Dynamic
 
-createSymlink :: (Symlink :> es) => OsPath -> OsPath -> Eff es ()
+createSymlink :: Symlink :> es => OsPath -> OsPath -> Eff es ()
 createSymlink source destination = send (CreateSymlink source destination)
 
-deleteSymlink :: (Symlink :> es) => OsPath -> Eff es ()
+deleteSymlink :: Symlink :> es => OsPath -> Eff es ()
 deleteSymlink target = send (DeleteSymlink target)
 
-testSymlink :: (Symlink :> es) => OsPath -> Eff es (Either SymlinkError () )
+testSymlink :: Symlink :> es => OsPath -> Eff es (Either SymlinkError ())
 testSymlink target = send (TestSymlink target)
 
 runSymlinkIO
@@ -65,49 +65,52 @@ runSymlinkIO = interpret $ \_ -> \case
     sourcePath <- liftIO $ OsPath.decodeFS source
     destinationPath <- liftIO $ OsPath.decodeFS destination
     case sourceType of
-      File -> 
+      File ->
         createFileLink sourcePath destinationPath
-      Directory -> 
+      Directory ->
         createDirectoryLink sourcePath destinationPath
   DeleteSymlink _ -> todo
   TestSymlink target -> do
     filepath <- liftIO $ OsPath.decodeFS $ target
     isSymbolic <- FileSystem.pathIsSymbolicLink filepath
     liftIO $ catch (testPath isSymbolic) $ \exception -> do
-        if isDoesNotExistError exception
+      if isDoesNotExistError exception
         then pure $ Left (DoesNotExist target)
         else pure $ Right ()
     where
       testPath pathIsSymbolic = do
-        if pathIsSymbolic 
-        then pure $ Right ()
-        else pure $ Left (IsNotSymlink target)
-    
+        if pathIsSymbolic
+          then pure $ Right ()
+          else pure $ Left (IsNotSymlink target)
+
 runSymlinkPure
   :: Map OsPath OsPath
   -> Eff (Symlink : es) a
   -> Eff es a
 runSymlinkPure virtualFS = reinterpret (State.evalState virtualFS) $ \_ -> \case
-  CreateSymlink source destination -> 
+  CreateSymlink source destination ->
     State.modify @(Map OsPath OsPath) (Map.insert source destination)
-  DeleteSymlink linkPath -> 
+  DeleteSymlink linkPath ->
     State.modify @(Map OsPath OsPath) (Map.delete linkPath)
-  TestSymlink linkPath -> State.gets @(Map OsPath OsPath) (Map.lookup linkPath) >>= \case
-    Just linkTarget -> pure $ Right ()
-    Nothing -> pure $ Left (DoesNotExist linkPath)
+  TestSymlink linkPath ->
+    State.gets @(Map OsPath OsPath) (Map.lookup linkPath) >>= \case
+      Just linkTarget -> pure $ Right ()
+      Nothing -> pure $ Left (DoesNotExist linkPath)
 
-verifyExistingSymlink 
-  :: (FileSystem :> es) 
-  => FilePath 
+verifyExistingSymlink
+  :: FileSystem :> es
+  => FilePath
   -> FilePath
   -> Eff es (Either SymlinkError ())
 verifyExistingSymlink linkPath expectedLinkTarget = do
   actualLinkTarget <- FileSystem.getSymbolicLinkTarget linkPath
   if actualLinkTarget == expectedLinkTarget
-  then pure (Right ())
-  else pure $ Left
-    (WrongTarget
-      (OsPath.unsafeEncodeUtf linkPath)
-      (OsPath.unsafeEncodeUtf expectedLinkTarget)
-      (OsPath.unsafeEncodeUtf actualLinkTarget)
-    )
+    then pure (Right ())
+    else
+      pure $
+        Left
+          ( WrongTarget
+              (OsPath.unsafeEncodeUtf linkPath)
+              (OsPath.unsafeEncodeUtf expectedLinkTarget)
+              (OsPath.unsafeEncodeUtf actualLinkTarget)
+          )

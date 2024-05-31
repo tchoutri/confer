@@ -1,22 +1,23 @@
 module Confer.Cmd.Deploy (deploy) where
 
+import Control.Monad
 import Control.Placeholder
 import Data.Vector (Vector)
 import Effectful
-import Control.Monad
 import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
 import System.OsPath (OsPath, (</>))
 import System.OsPath qualified as OsPath
 
-import Confer.Effect.Symlink
 import Confer.Config.Types
+import Confer.Effect.Symlink
+
 -- | Take a filtered and checked list of deployments.
 --
 -- For each fact, we perform sequentially:
 --   * Check that the desired file exists
 --   * Check that the target symlink does not exist
---      * If it exists, make sure that it points to the 
+--      * If it exists, make sure that it points to the
 --        file that is version controlled
 --          * If it does not, raise an error
 deploy
