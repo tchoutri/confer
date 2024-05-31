@@ -70,19 +70,18 @@ runSymlinkIO = interpret $ \_ -> \case
       Directory -> 
         createDirectoryLink sourcePath destinationPath
   DeleteSymlink _ -> todo
-  TestSymlink target' -> do
-    target <- liftIO $ OsPath.decodeFS target'
-    liftIO $ catch (do
-      result <- Directory.pathIsSymbolicLink target
-      if result 
-      then pure $ Right ()
-      else pure $ Left (IsNotSymlink target')
-      )
-      (\exception -> do
+  TestSymlink target -> do
+    filepath <- liftIO $ OsPath.decodeFS $ target
+    isSymbolic <- FileSystem.pathIsSymbolicLink filepath
+    liftIO $ catch (testPath isSymbolic) $ \exception -> do
         if isDoesNotExistError exception
-        then pure $ Left (DoesNotExist target')
+        then pure $ Left (DoesNotExist target)
         else pure $ Right ()
-      )
+    where
+      testPath pathIsSymbolic = do
+        if pathIsSymbolic 
+        then pure $ Right ()
+        else pure $ Left (IsNotSymlink target)
     
 runSymlinkPure
   :: Map OsPath OsPath

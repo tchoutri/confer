@@ -116,10 +116,10 @@ executable confer
   build-depends:
     , base
     , confer
-    , filepath
     , containers
     , effectful
     , effectful-core
+    , filepath
     , optparse-applicative
 
   if flag(development)
@@ -138,9 +138,9 @@ test-suite confer-test
   build-depends:
     , base
     , confer
+    , containers
     , directory
     , effectful-core
     , filepath
     , tasty
     , tasty-hunit
-    , containers
