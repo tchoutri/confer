@@ -71,7 +71,7 @@ runSymlinkIO = interpret $ \_ -> \case
         createDirectoryLink sourcePath destinationPath
   DeleteSymlink _ -> todo
   TestSymlink target -> do
-    filepath <- liftIO $ OsPath.decodeFS $ target
+    filepath <- liftIO $ OsPath.decodeFS target
     isSymbolic <- FileSystem.pathIsSymbolicLink filepath
     liftIO $ catch (testPath isSymbolic) $ \exception -> do
       if isDoesNotExistError exception
@@ -94,11 +94,11 @@ runSymlinkPure virtualFS = reinterpret (State.evalState virtualFS) $ \_ -> \case
     State.modify @(Map OsPath OsPath) (Map.delete linkPath)
   TestSymlink linkPath ->
     State.gets @(Map OsPath OsPath) (Map.lookup linkPath) >>= \case
-      Just linkTarget -> pure $ Right ()
+      Just _linkTarget -> pure $ Right ()
       Nothing -> pure $ Left (DoesNotExist linkPath)
 
 verifyExistingSymlink
-  :: FileSystem :> es
+  :: (IOE :> es, FileSystem :> es)
   => FilePath
   -> FilePath
   -> Eff es (Either SymlinkError ())
@@ -107,10 +107,9 @@ verifyExistingSymlink linkPath expectedLinkTarget = do
   if actualLinkTarget == expectedLinkTarget
     then pure (Right ())
     else
-      pure $
-        Left
-          ( WrongTarget
-              (OsPath.unsafeEncodeUtf linkPath)
-              (OsPath.unsafeEncodeUtf expectedLinkTarget)
-              (OsPath.unsafeEncodeUtf actualLinkTarget)
-          )
+      Left
+        <$> ( WrongTarget
+                <$> liftIO (OsPath.encodeFS linkPath)
+                <*> liftIO (OsPath.encodeFS expectedLinkTarget)
+                <*> liftIO (OsPath.encodeFS actualLinkTarget)
+            )
