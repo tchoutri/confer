@@ -187,7 +187,6 @@ The home directory of the current user.
 A dictionary called `Deployment` that takes the following constructors:
 * name: String, name of this deployment
 * source: FilePath, directory or file which is going to be linked to the destination
-* sources: Array FilePath, several sources that will be linked to the same destination directory
 * destination: FilePath, directory to which the `source` will be linked
 
 #### `confer.deployments`
