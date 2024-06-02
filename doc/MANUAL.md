@@ -13,7 +13,7 @@ confer – The dotfiles manager
 
 ## DESCRIPTION
 
-*confer* is a dotfiles manager that handles the deployment and synchronisation of your configuration files. 
+*confer* is a dotfiles manager that handles the deployment and synchronisation of your configuration files.
 
 It is configured in Lua. The [Lua API](#lua-api) enables you to decide where to link your files depending on criteria, like your operating system.
 
@@ -163,7 +163,7 @@ Possible values:
 * freebsd
 * linux
 * windows
- 
+
 #### `host.arch`:
 The architecture identifier of the host.
 It is either inferred from your host, or overriden by the `--arch` command-line option.
@@ -183,14 +183,22 @@ The home directory of the current user.
 
 ### Confer API
 
-#### `confer.deploy`
-A dictionary called `Deployment` that takes the following constructors:
+<dl>
+  <dt>FilePath</dt>
+  <dd style="margin-left: 1rem;">OS-specific string that represents the location of file or directory</dd>
+
+  <dt>String</dt>
+  <dd style="margin-left: 1rem;">UTF-8 encoded sequence of characters</dd>
+</dl>
+
+#### `confer.fact`
+This function takes a dictionary (of type `Fact`) which takes the following constructors:
 * name: String, name of this deployment
 * source: FilePath, directory or file which is going to be linked to the destination
 * destination: FilePath, directory to which the `source` will be linked
 
-#### `confer.deployments`
-* deployments: Array Deployment, all the deployments you want to run
+#### `confer.deploy`
+* facts: Array Fact, all the facts you want to run
 * hostname: String, the hostname of the machine in which the deployment will occur. If not specified, will occur on all hosts.
 * architecture: String, the architecture of the machine in which the deployment will occur. If not specified, will occur on all architectures.
 * os: String, the operating system of the machine in which the deployment will occur. If not specified, will occur on all operating systems.
