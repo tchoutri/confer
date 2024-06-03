@@ -1,4 +1,4 @@
-module Confer.Cmd.Check (check) where
+module Confer.CLI.Cmd.Check (check) where
 
 import Control.Monad
 import Control.Placeholder

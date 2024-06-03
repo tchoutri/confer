@@ -1,7 +1,6 @@
 module Confer.Config.Evaluator
   ( loadConfiguration
   , adjustConfiguration
-  , processConfiguration
   ) where
 
 import Control.Monad (void)
@@ -94,21 +93,3 @@ peekOsPath index = do
   case OsPath.encodeWith utf8 utf16le (Text.unpack result) of
     Right p -> pure p
     Left e -> fail $ OsPath.showEncodingException e
-
-processConfiguration
-  :: ( IOE :> es
-     , FileSystem :> es
-     )
-  => OsPath
-  -> Eff es (Vector Deployment)
-processConfiguration pathToConfigFile = do
-  loadConfiguration pathToConfigFile >>= \case
-    Right allDeployments -> do
-      let currentOS = OS (Text.pack System.os)
-      let currentArch = Arch (Text.pack System.arch)
-      pure $
-        adjustConfiguration
-          currentOS
-          currentArch
-          allDeployments
-    Left e -> error e

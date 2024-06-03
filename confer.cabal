@@ -76,8 +76,10 @@ library
   exposed-modules:
     Confer.API.Host
     Confer.API.User
-    Confer.Cmd.Check
-    Confer.Cmd.Deploy
+    Confer.CLI.Cmd.Check
+    Confer.CLI.Cmd.Deploy
+    Confer.CLI.Errors
+    Confer.Config.ConfigFile
     Confer.Config.Evaluator
     Confer.Config.Types
     Confer.Effect.Symlink

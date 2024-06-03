@@ -1,4 +1,4 @@
-module Confer.Cmd.Deploy (deploy) where
+module Confer.CLI.Cmd.Deploy (deploy) where
 
 import Control.Monad
 import Control.Placeholder
