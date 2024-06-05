@@ -5,6 +5,7 @@ module Confer.Config.Evaluator
 
 import Control.Monad (void)
 import Control.Placeholder
+import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
@@ -27,17 +28,22 @@ import System.OsPath.Encoding qualified as OsPath
 import Confer.API.Host qualified as API
 import Confer.API.User qualified as API
 import Confer.Config.Types
+import Data.Maybe (isNothing)
+import System.Directory qualified as Directory
+import System.IO.Unsafe qualified as Unsafe
 
 adjustConfiguration
-  :: DeploymentOS
+  :: Text
+  -> DeploymentOS
   -> DeploymentArchitecture
   -> Vector Deployment
   -> Vector Deployment
-adjustConfiguration os arch deployments =
+adjustConfiguration hostname os arch deployments =
   Vector.filter
     ( \d ->
         (d.os == AllOS || d.os == os)
           && (d.architecture == AllArchs || d.architecture == arch)
+          && (d.hostname == Just hostname || isNothing d.hostname)
     )
     deployments
 
@@ -92,7 +98,8 @@ peekFact index = Lua.retrieving "fact" $ do
 
 peekOsPath :: Peeker Exception OsPath
 peekOsPath index = do
-  result <- Lua.peekText index
-  case OsPath.encodeWith utf8 utf16le (Text.unpack result) of
+  result <- Lua.peekString index
+  let absolutePath = Unsafe.unsafePerformIO $ Directory.makeAbsolute result
+  case OsPath.encodeWith utf8 utf16le absolutePath of
     Right p -> pure p
     Left e -> fail $ OsPath.showEncodingException e

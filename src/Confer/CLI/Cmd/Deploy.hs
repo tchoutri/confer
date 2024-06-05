@@ -2,11 +2,13 @@ module Confer.CLI.Cmd.Deploy (deploy) where
 
 import Control.Monad
 import Control.Placeholder
+import Data.Text.Display
+import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Effectful
 import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
-import System.OsPath (OsPath, (</>))
+import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 
 import Confer.Config.Types
@@ -30,8 +32,10 @@ deploy
 deploy deployments = do
   forM_ deployments $ \d ->
     forM_ d.facts $ \fact -> do
-      let osPath = fact.destination </> fact.source
-      filepath <- liftIO $ OsPath.decodeFS osPath
-      exists <- FileSystem.doesPathExist filepath
-      unless exists $
+      filepath <- liftIO $ OsPath.decodeFS fact.destination
+      destinationPathExists <- FileSystem.doesPathExist filepath
+      unless destinationPathExists $ do
+        liftIO $
+          Text.putStrLn $
+            "[🔗] " <> display fact
         createSymlink fact.source fact.destination

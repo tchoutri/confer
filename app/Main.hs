@@ -10,7 +10,6 @@ import Effectful.Error.Static
 import Effectful.FileSystem
 import Options.Applicative
 import Options.Applicative.Types
-import System.Exit qualified as System
 import System.OsPath
 import System.OsPath qualified as OsPath
 
@@ -47,11 +46,7 @@ main = do
       & runEff
   case result of
     Right _ -> pure ()
-    Left NoDefaultConfigurationFile ->
-      liftIO $ System.die "Could not find configuration file at ./deployments.lua"
-    Left (NoUserProvidedConfigurationFile osPath) -> do
-      filePath <- liftIO $ OsPath.decodeFS osPath
-      liftIO $ System.die $ "Could not find configuration file at" <> filePath
+    Left e -> reportError e
 
 parseOptions :: Parser Options
 parseOptions =
