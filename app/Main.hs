@@ -21,19 +21,15 @@ import Confer.Config.Evaluator
 import Confer.Effect.Symlink
 
 data Options = Options
-  { cliCommand :: Command
+  { dryRun :: Bool
+  , configurationFile :: Maybe OsPath
+  , cliCommand :: Command
   }
   deriving stock (Show, Eq)
 
 data Command
-  = Check CmdOptions
-  | Deploy CmdOptions
-  deriving stock (Show, Eq)
-
-data CmdOptions = CmdOptions
-  { dryRun :: Bool
-  , configurationFile :: Maybe OsPath
-  }
+  = Check
+  | Deploy
   deriving stock (Show, Eq)
 
 main :: IO ()
@@ -50,29 +46,23 @@ main = do
 
 parseOptions :: Parser Options
 parseOptions =
-  Options <$> parseCommand
+  Options
+    <$> switch
+      (long "dry-run" <> help "Do not perform actual file system operations")
+    <*> optional (option osPathOption (long "deployments-file" <> metavar "FILENAME" <> help "Use the specified the deployments.lua file"))
+    <*> parseCommand
 
 parseCommand :: Parser Command
 parseCommand =
   subparser $
-    command "check" (parseCheck `withInfo` "Ensure that the configured link destinations do not exist as files already")
+    command "check" (parseCheck `withInfo` "Perform sanity checks on the link destinations")
       <> command "deploy" (parseDeploy `withInfo` "Deploy the configured symbolic links")
 
 parseCheck :: Parser Command
-parseCheck =
-  Check
-    <$> ( CmdOptions
-            <$> switch (long "dry-run" <> help "Do not perform actual file system operations")
-            <*> optional (option osPathOption (long "deployments-file" <> metavar "FILENAME" <> help "Use the specified the deployments.lua file"))
-        )
+parseCheck = pure Check
 
 parseDeploy :: Parser Command
-parseDeploy =
-  Deploy
-    <$> ( CmdOptions
-            <$> switch (long "dry-run" <> help "Do not perform actual file system operations")
-            <*> optional (option osPathOption (long "deployments-file" <> metavar "FILENAME" <> help "Use the specified the deployments.lua file"))
-        )
+parseDeploy = pure Deploy
 
 runOptions
   :: ( IOE :> es
@@ -81,18 +71,18 @@ runOptions
      )
   => Options
   -> Eff es ()
-runOptions (Options (Check cmdOptions)) = do
-  deployments <- processConfiguration cmdOptions.configurationFile
-  if cmdOptions.dryRun
+runOptions (Options dryRun configurationFile Check) = do
+  deployments <- processConfiguration configurationFile
+  if dryRun
     then
       Cmd.check deployments
         & runSymlinkPure Map.empty
     else
       Cmd.check deployments
         & runSymlinkIO
-runOptions (Options (Deploy cmdOptions)) = do
-  deployments <- processConfiguration cmdOptions.configurationFile
-  if cmdOptions.dryRun
+runOptions (Options dryRun configurationFile Deploy) = do
+  deployments <- processConfiguration configurationFile
+  if dryRun
     then
       Cmd.deploy deployments
         & runSymlinkPure Map.empty
