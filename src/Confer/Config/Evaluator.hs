@@ -1,12 +1,13 @@
 module Confer.Config.Evaluator
   ( loadConfiguration
   , adjustConfiguration
-  , processConfiguration
   ) where
 
 import Control.Monad (void)
 import Control.Placeholder
+import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Debug.Trace
@@ -27,17 +28,22 @@ import System.OsPath.Encoding qualified as OsPath
 import Confer.API.Host qualified as API
 import Confer.API.User qualified as API
 import Confer.Config.Types
+import Data.Maybe (isNothing)
+import System.Directory qualified as Directory
+import System.IO.Unsafe qualified as Unsafe
 
 adjustConfiguration
-  :: DeploymentOS
+  :: Text
+  -> DeploymentOS
   -> DeploymentArchitecture
   -> Vector Deployment
   -> Vector Deployment
-adjustConfiguration os arch deployments =
+adjustConfiguration hostname os arch deployments =
   Vector.filter
     ( \d ->
         (d.os == AllOS || d.os == os)
           && (d.architecture == AllArchs || d.architecture == arch)
+          && (d.hostname == Just hostname || isNothing d.hostname)
     )
     deployments
 
@@ -52,12 +58,14 @@ loadConfiguration pathToConfigFile = do
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
+    liftIO $ Text.putStrLn "Loading \"./runtime/lua/confer.lua\""
     Lua.dofile (Just "./runtime/lua/confer.lua")
     Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule
     Lua.registerModule hostModule
     configFilePath <- liftIO $ OsPath.decodeFS pathToConfigFile
+    liftIO $ Text.putStrLn $ "Loading " <> Text.pack (show configFilePath)
     Lua.dofile (Just configFilePath)
       >>= \case Lua.OK -> pure (); _ -> Lua.throwErrorAsException
     Lua.resultToEither <$> Lua.runPeeker peekConfig Lua.top
@@ -90,25 +98,8 @@ peekFact index = Lua.retrieving "fact" $ do
 
 peekOsPath :: Peeker Exception OsPath
 peekOsPath index = do
-  result <- Lua.peekText index
-  case OsPath.encodeWith utf8 utf16le (Text.unpack result) of
+  result <- Lua.peekString index
+  let absolutePath = Unsafe.unsafePerformIO $ Directory.makeAbsolute result
+  case OsPath.encodeWith utf8 utf16le absolutePath of
     Right p -> pure p
     Left e -> fail $ OsPath.showEncodingException e
-
-processConfiguration
-  :: ( IOE :> es
-     , FileSystem :> es
-     )
-  => OsPath
-  -> Eff es (Vector Deployment)
-processConfiguration pathToConfigFile = do
-  loadConfiguration pathToConfigFile >>= \case
-    Right allDeployments -> do
-      let currentOS = OS (Text.pack System.os)
-      let currentArch = Arch (Text.pack System.arch)
-      pure $
-        adjustConfiguration
-          currentOS
-          currentArch
-          allDeployments
-    Left e -> error e

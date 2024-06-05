@@ -62,7 +62,8 @@ runSymlinkIO = interpret $ \_ -> \case
     sourceType <- liftIO $ do
       metadata <- Directory.getFileMetadata source
       pure $ Directory.fileTypeFromMetadata metadata
-    sourcePath <- liftIO $ OsPath.decodeFS source
+    sourceFilePath <- liftIO $ OsPath.decodeFS source
+    sourcePath <- FileSystem.makeAbsolute sourceFilePath
     destinationPath <- liftIO $ OsPath.decodeFS destination
     case sourceType of
       File ->

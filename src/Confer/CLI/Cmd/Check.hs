@@ -1,4 +1,4 @@
-module Confer.Cmd.Check (check) where
+module Confer.CLI.Cmd.Check (check) where
 
 import Control.Monad
 import Control.Placeholder
@@ -17,7 +17,7 @@ import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
 import System.Exit qualified as System
 import System.Info qualified as System
-import System.OsPath (OsPath, (</>))
+import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 import Validation
 
@@ -52,8 +52,7 @@ validateSymlink
   => Fact
   -> Eff es (Validation (NonEmpty SymlinkError) ())
 validateSymlink fact = do
-  let osPath = fact.destination </> fact.source
-  result <- Symlink.testSymlink osPath
+  result <- Symlink.testSymlink fact.destination
   case result of
     Right _ -> pure $ Success ()
     Left e -> pure $ Failure (NE.singleton e)

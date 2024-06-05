@@ -18,7 +18,7 @@ lint: ## Run the code linter (HLint)
 
 style: ## Run the code styler (fourmolu and cabal-fmt)
 	@cabal-fmt -i *.cabal
-	@fourmolu -q --mode inplace test src
+	@fourmolu -q --mode inplace test src app
 
 tags: ## Generate ctags for the project with `ghc-tags`
 	@ghc-tags -c
