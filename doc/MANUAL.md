@@ -68,7 +68,7 @@ local git_deployment = confer.fact({
   -- The file or directory that you want to link.
   source = ".gitconfig",
   -- The directory in which the link will be made.
-  destination = "~/"
+  destination = user.home .. "/.gitconfig"
 })
 ```
 Then we add a rule that holds potential conditions for this deployment to occur:
@@ -97,25 +97,25 @@ local user = require("user")
 local git_deployment = confer.fact({
   name = "git",
   source = ".gitconfig",
-  destination = user.home
+  destination = user.home .. "/.gitconfig"
 })
 
 local zsh_deployment = confer.fact({
   name = "zsh",
   source = ".zsh",
-  destination = user.home
+  destination = user.home .. "/.zsh"
 })
 
 local kitty_deployment = confer.fact({
   name = "kitty",
   source = "kitty",
-  destination = user.home .. "/.config"
+  destination = user.home .. "/.config/kitty"
 })
 
 local irssi_deployment = confer.fact({
   name = "irssi",
   source = ".irssi",
-  destination = user.home
+  destination = user.home .. "/.irssi"
 })
 
 -- Deployments
@@ -195,7 +195,7 @@ The home directory of the current user.
 This function takes a dictionary (of type `Fact`) which takes the following constructors:
 * name: String, name of this deployment
 * source: FilePath, directory or file which is going to be linked to the destination
-* destination: FilePath, directory to which the `source` will be linked
+* destination: FilePath, absolute path to which the `source` will be linked
 
 #### `confer.deploy`
 * facts: Array Fact, all the facts you want to run
