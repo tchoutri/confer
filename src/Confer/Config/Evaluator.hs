@@ -6,6 +6,7 @@ module Confer.Config.Evaluator
 import Control.Monad (void)
 import Control.Placeholder
 import Data.Text qualified as Text
+import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Debug.Trace
@@ -51,12 +52,14 @@ loadConfiguration pathToConfigFile = do
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
+    liftIO $ Text.putStrLn "Loading \"./runtime/lua/confer.lua\""
     Lua.dofile (Just "./runtime/lua/confer.lua")
     Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule
     Lua.registerModule hostModule
     configFilePath <- liftIO $ OsPath.decodeFS pathToConfigFile
+    liftIO $ Text.putStrLn $ "Loading " <> Text.pack (show configFilePath)
     Lua.dofile (Just configFilePath)
       >>= \case Lua.OK -> pure (); _ -> Lua.throwErrorAsException
     Lua.resultToEither <$> Lua.runPeeker peekConfig Lua.top
