@@ -13,6 +13,8 @@ import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Effectful
+import Effectful.Error.Static (Error)
+import Effectful.Error.Static qualified as Error
 import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
 import System.Exit qualified as System
@@ -21,14 +23,17 @@ import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 import Validation
 
+import Confer.CLI.Errors (CLIError (..))
 import Confer.Config.Evaluator
 import Confer.Config.Types
 import Confer.Effect.Symlink (Symlink, SymlinkError (..))
+import Confer.Effect.Symlink qualified as Errors
 import Confer.Effect.Symlink qualified as Symlink
 
 check
   :: ( IOE :> es
      , Symlink :> es
+     , Error CLIError :> es
      )
   => Vector Deployment
   -> Eff es ()
@@ -43,8 +48,8 @@ check deployments = do
     Failure errors -> do
       forM_ errors $
         \e ->
-          liftIO $ Text.putStrLn $ formatSymlinkError e
-      liftIO System.exitFailure
+          liftIO $ Text.putStrLn $ Errors.formatSymlinkError e
+      Error.throwError (SymlinkErrors errors)
     Success _ -> pure ()
 
 validateSymlink
@@ -52,24 +57,7 @@ validateSymlink
   => Fact
   -> Eff es (Validation (NonEmpty SymlinkError) ())
 validateSymlink fact = do
-  result <- Symlink.testSymlink fact.destination
+  result <- Symlink.testSymlink fact.destination fact.source
   case result of
     Right _ -> pure $ Success ()
     Left e -> pure $ Failure (NE.singleton e)
-
-formatSymlinkError :: SymlinkError -> Text
-formatSymlinkError (DoesNotExist path) =
-  "[!] "
-    <> display (Text.pack . show $ path)
-    <> " does not exist"
-formatSymlinkError (IsNotSymlink path) =
-  "[!] "
-    <> display (Text.pack . show $ path)
-    <> " is not a symbolic link"
-formatSymlinkError (WrongTarget linkPath expectedTarget actualTarget) =
-  "[!] "
-    <> display (Text.pack . show $ linkPath)
-    <> " points to "
-    <> display (Text.pack . show $ actualTarget)
-    <> " instead of pointing to "
-    <> display (Text.pack . show $ expectedTarget)
