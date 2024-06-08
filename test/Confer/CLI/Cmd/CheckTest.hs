@@ -1,4 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
+
 module Confer.CLI.Cmd.CheckTest where
 
 import Data.Function
@@ -28,6 +29,7 @@ spec =
     , testThis "Test that non-existing symlink fails" testNonExistingSymlink
     , testThis "Test that symlink to non-existing file fails" testSymlinkToNonExistingTarget
     , testThis "Test that symlink to incorrect file fails" testSymlinkToWrongTarget
+    , testThis "Test that non-symlink file fails" testNonSymlink
     ]
 
 testExistingSymlink :: TestEff ()
@@ -79,3 +81,11 @@ testSymlinkToWrongTarget =
         Symlink.createSymlink osDestinationPath osLinkPath
         Symlink.testSymlink osLinkPath (osDestinationPath <> [osp| -lol |])
       assertWrongTarget result
+
+testNonSymlink :: TestEff ()
+testNonSymlink =
+  Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ -> do
+    result <- Symlink.runSymlinkIO $ do
+      osFilepath <- liftIO $ OsPath.encodeFS filepath
+      Symlink.testSymlink osFilepath ([osp| lol |])
+    assertIsNotSymlink result

@@ -44,6 +44,11 @@ assertDoesNotExist (Right _) = assertFailure "Did not return Left"
 assertDoesNotExist (Left (DoesNotExist{})) = pure ()
 assertDoesNotExist (Left e) = assertFailure $ "Returned: " <> show e
 
+assertIsNotSymlink :: HasCallStack => Either SymlinkError () -> TestEff ()
+assertIsNotSymlink (Right _) = assertFailure "Did not return Left"
+assertIsNotSymlink (Left (IsNotSymlink{})) = pure ()
+assertIsNotSymlink (Left e) = assertFailure $ "Returned: " <> show e
+
 assertRight :: HasCallStack => Either a () -> TestEff ()
 assertRight (Left _a) = liftIO $ Test.assertFailure "Test return Left instead of Right"
 assertRight (Right b) = pure b

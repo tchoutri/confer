@@ -63,8 +63,7 @@ common ghc-options
       -Wno-unused-packages -Werror=unused-imports
 
   if flag(development)
-    ghc-options:
-      -finfo-table-map -Wno-unused-imports -Wno-unused-packages -fhpc
+    ghc-options: -finfo-table-map -Wno-unused-imports -Wno-unused-packages
 
 common rts-options
   ghc-options: -rtsopts -threaded "-with-rtsopts=-N -T"
