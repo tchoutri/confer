@@ -10,6 +10,7 @@ import Effectful.Error.Static
 import Effectful.FileSystem
 import Options.Applicative
 import Options.Applicative.Types
+import System.IO
 import System.OsPath
 import System.OsPath qualified as OsPath
 
@@ -34,6 +35,7 @@ data Command
 
 main :: IO ()
 main = do
+  hSetBuffering stdout LineBuffering
   parseResult <- execParser (parseOptions `withInfo` "confer – The dotfiles manager")
   result <-
     runOptions parseResult

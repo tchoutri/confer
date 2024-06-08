@@ -137,12 +137,19 @@ test-suite confer-test
   hs-source-dirs: test
   main-is:        Main.hs
   other-modules:
+    Confer.CLI.Cmd.CheckTest
+    Utils
+
+  other-modules:
   build-depends:
     , base
     , confer
     , containers
     , directory
+    , effectful
     , effectful-core
     , filepath
     , tasty
+    , tasty-coverage
     , tasty-hunit
+    , temporary

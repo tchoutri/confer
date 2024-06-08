@@ -12,6 +12,9 @@ optimization: 2
 
 tests: True
 
+-- package confer
+--   ghc-options: -fhpc
+
 package *
   ghc-options: +RTS -A32m -RTS -j -haddock
 
