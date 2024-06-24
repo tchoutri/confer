@@ -87,5 +87,5 @@ testNonSymlink =
   Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ -> do
     result <- Symlink.runSymlinkIO $ do
       osFilepath <- liftIO $ OsPath.encodeFS filepath
-      Symlink.testSymlink osFilepath ([osp| lol |])
+      Symlink.testSymlink osFilepath [osp| lol |]
     assertIsNotSymlink result

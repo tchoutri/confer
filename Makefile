@@ -14,7 +14,7 @@ test: ## Run the test suite
 	@cabal test
 
 lint: ## Run the code linter (HLint)
-	@find test src -name "*.hs" | xargs -P $(PROCS) -I {} hlint --refactor-options="-i" --refactor {}
+	@find app test src -name "*.hs" | xargs -P $(PROCS) -I {} hlint --refactor-options="-i" --refactor {}
 
 style: ## Run the code styler (fourmolu and cabal-fmt)
 	@cabal-fmt -i *.cabal

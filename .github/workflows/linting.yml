@@ -5,18 +5,19 @@ on:
   push:
     branches: ["main"]
 
-# jobs:
-#   fourmolu:
-#     runs-on: ubuntu-latest
-#     steps:
-#     - uses: actions/checkout@v4
-#
-#     - uses: fourmolu/fourmolu-action@v10
-#       with:
-#         pattern: |
-#           src/**/*.hs
-#           test/**/*.hs
-#
+jobs:
+  fourmolu:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: fourmolu/fourmolu-action@v10
+      with:
+        pattern: |
+          app/**/*.hs
+          src/**/*.hs
+          test/**/*.hs
+
   hlint:
     runs-on: ubuntu-latest
     steps:
@@ -30,5 +31,5 @@ on:
     - name: 'Run HLint'
       uses: haskell-actions/hlint-run@v2
       with:
-        path: '["src/", "test/"]'
+        path: '["app/", "src/", "test/"]'
         fail-on: warning
