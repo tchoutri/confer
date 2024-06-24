@@ -66,7 +66,7 @@ jobs:
       - name: Upload the confer-head executable
         uses: actions/upload-artifact@v3
         with:
-          name: confer-${{ runner.os }}-x86_64
+          name: confer-${{ runner.os }}-$(uname -m)
           path: ${{ env.CONFER_EXEC_TAR }}
 
   build-alpine:
@@ -145,6 +145,10 @@ jobs:
       with:
         name: confer-Linux-static-x86_64
 
+    - uses: actions/download-artifact@v3
+      with:
+        name: confer-macOS-aarch64
+
     - name: Create GitHub prerelease
       uses: marvinpinto/action-automatic-releases@v1.2.1
       with:
@@ -155,3 +159,4 @@ jobs:
         files: |
           confer-head-Linux-x86_64.tar.gz
           confer-head-Linux-static-x86_64.tar.gz
+          confer-head-macOS-aarch64.tar.gz
