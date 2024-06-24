@@ -19,7 +19,7 @@ jobs:
         with:
           cabal-file: confer.cabal
           ubuntu-version: 'latest'
-          macos: 'macos-13'
+          macos-version: 'latest'
           version: 0.1.7.0
   tests:
     name: ${{ matrix.ghc }} on ${{ matrix.os }}
@@ -28,11 +28,11 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
     steps:
-      - name: "Install tools"
-        run: |
-            sudo apt install upx-ucl 
       - name: Checkout base repo
         uses: actions/checkout@v4
+      - name: "Install tools"
+        run: |
+            .github/workflows/install-tools.sh
       - name: Set up Haskell
         id: setup-haskell
         uses: haskell-actions/setup@v2
@@ -60,7 +60,7 @@ jobs:
           upx -9 $CONFER_EXEC
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
-          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-x86_64.tar.gz
+          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-$(uname -m).tar.gz
           tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
       - name: Upload the confer-head executable
@@ -73,9 +73,7 @@ jobs:
     name: Build statically linked using alpine
     runs-on: ubuntu-latest
     container: 'alpine:3.19'
-    needs: ['generate-matrix', 'tests']
-    strategy:
-      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    needs: ['tests']
     steps:
       - name: Install extra dependencies
         shell: sh
@@ -90,7 +88,7 @@ jobs:
       - uses: haskell-actions/setup@v2
         id: setup-haskell
         with:
-          ghc-version: ${{ matrix.ghc }}
+          ghc-version: '9.8.2'
           cabal-version: 'latest'
 
       - name: Configure
@@ -102,8 +100,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-cabal-${{ hashFiles('**/plan.json') }}
-          restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}-
+          key: ${{ runner.os }}-ghc-9.8.2-cabal-${{ hashFiles('**/plan.json') }}
+          restore-keys: ${{ runner.os }}-ghc-9.8.2-
 
       - name: Enable statically linked executables
         run: |
@@ -122,7 +120,7 @@ jobs:
           upx -9 $CONFER_EXEC
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
-          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-x86_64.tar.gz
+          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-$(uname -m).tar.gz
           tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
 
