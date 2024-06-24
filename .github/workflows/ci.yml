@@ -56,8 +56,7 @@ jobs:
       - name: Package the confer-head executable
         run: |
           CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
-          strip $CONFER_EXEC
-          upx -9 $CONFER_EXEC
+          .github/workflows/process-binaries.sh
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
           CONFER_EXEC_TAR=confer-head-${{ runner.os }}-$(uname -m).tar.gz
@@ -66,7 +65,7 @@ jobs:
       - name: Upload the confer-head executable
         uses: actions/upload-artifact@v3
         with:
-          name: confer-${{ runner.os }}-x86_64
+          name: confer-${{ runner.os }}-$(uname -m)
           path: ${{ env.CONFER_EXEC_TAR }}
 
   build-alpine:
@@ -116,8 +115,7 @@ jobs:
       - name: Tar cabal head executable
         run: |
           CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
-          strip $CONFER_EXEC
-          upx -9 $CONFER_EXEC
+          .github/workflows/process-binaries.sh
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
           CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-$(uname -m).tar.gz
@@ -145,6 +143,10 @@ jobs:
       with:
         name: confer-Linux-static-x86_64
 
+    - uses: actions/download-artifact@v3
+      with:
+        name: confer-macOS-aarch64
+
     - name: Create GitHub prerelease
       uses: marvinpinto/action-automatic-releases@v1.2.1
       with:
@@ -155,3 +157,4 @@ jobs:
         files: |
           confer-head-Linux-x86_64.tar.gz
           confer-head-Linux-static-x86_64.tar.gz
+          confer-head-macOS-aarch64.tar.gz
