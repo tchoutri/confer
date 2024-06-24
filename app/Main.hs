@@ -1,8 +1,5 @@
-{-# LANGUAGE QuasiQuotes #-}
-
 module Main where
 
-import Control.Placeholder
 import Data.Function ((&))
 import Data.Map.Strict qualified as Map
 import Effectful
@@ -96,4 +93,4 @@ withInfo :: Parser a -> String -> ParserInfo a
 withInfo opts desc = info (helper <*> opts) $ progDesc desc
 
 osPathOption :: ReadM OsPath
-osPathOption = maybeReader (OsPath.encodeUtf)
+osPathOption = maybeReader OsPath.encodeUtf

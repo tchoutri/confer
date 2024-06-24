@@ -3,3 +3,4 @@ tags
 tags.mtime
 .hpc
 *.tix
+*.local

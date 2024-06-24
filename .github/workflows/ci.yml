@@ -4,12 +4,12 @@ name: CI
 on:
   pull_request:
   push:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
   generate-matrix:
-    name: "Generate matrix from cabal"
-    outputs: 
+    name: 'Generate matrix from cabal'
+    outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     runs-on: ubuntu-latest
     steps:
@@ -18,8 +18,8 @@ jobs:
         uses: kleidukos/get-tested@v0.1.7.0
         with:
           cabal-file: confer.cabal
-          ubuntu-version: "latest"
-          macos: "macos-13"
+          ubuntu-version: 'latest'
+          macos: 'macos-13'
           version: 0.1.7.0
   tests:
     name: ${{ matrix.ghc }} on ${{ matrix.os }}
@@ -39,7 +39,7 @@ jobs:
       - name: Configure
         run: cabal configure --enable-tests
       - name: Freeze
-        run: cabal freeze
+        run: cabal freeze --project-file=cabal.release.project
       - name: Cache
         uses: actions/cache@v4.0.2
         with:
@@ -47,6 +47,106 @@ jobs:
           key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-cabal-${{ hashFiles('**/plan.json') }}
           restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}-
       - name: Build
-        run: cabal new-build
+        run: cabal build --project-file=cabal.release.project
       - name: Test
-        run: cabal new-test all
+        run: cabal test --project-file=cabal.release.project all
+      - name: Package the confer-head executable
+        run: |
+          CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
+          DIR=$(dirname $CONFER_EXEC)
+          FILE=$(basename $CONFER_EXEC)
+          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-x86_64.tar.gz
+          tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
+          echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
+      - name: Upload the confer-head executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: confer-${{ runner.os }}-x86_64
+          path: ${{ env.CONFER_EXEC_TAR }}
+
+  build-alpine:
+    name: Build statically linked using alpine
+    runs-on: ubuntu-latest
+    container: 'alpine:3.19'
+    needs: ['generate-matrix', 'tests']
+    strategy:
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Install extra dependencies
+        shell: sh
+        run: |
+          apk add bash curl sudo jq pkgconfig \
+          zlib-dev zlib-static binutils-gold curl \
+          gcc g++ gmp-dev libc-dev libffi-dev make \
+          musl-dev ncurses-dev perl tar xz git
+
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        id: setup-haskell
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: 'latest'
+
+      - name: Configure
+        run: cabal configure --enable-tests
+
+      - name: Freeze
+        run: cabal freeze --project-file=cabal.release.project
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.setup-haskell.outputs.cabal-store }}
+          key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-cabal-${{ hashFiles('**/plan.json') }}
+          restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}-
+
+      - name: Enable statically linked executables
+        run: |
+          echo 'executable-static: true' >> cabal.release.project
+
+      - name: Build
+        run: cabal build --project-file=cabal.release.project
+
+      - name: Test
+        run: cabal test --project-file=cabal.release.project all
+
+      - name: Tar cabal head executable
+        run: |
+          CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
+          DIR=$(dirname $CONFER_EXEC)
+          FILE=$(basename $CONFER_EXEC)
+          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-x86_64.tar.gz
+          tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
+          echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
+
+      - name: Upload confer executable to workflow artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: confer-${{ runner.os }}-static-x86_64
+          path: ${{ env.CONFER_EXEC_TAR }}
+
+  prerelease-head:
+    name: Create a GitHub prerelease with the binary artifacts
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: ['tests', 'build-alpine']
+
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: confer-Linux-x86_64
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: confer-Linux-static-x86_64
+
+    - name: Create GitHub prerelease
+      uses: marvinpinto/action-automatic-releases@v1.2.1
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        automatic_release_tag: confer-head
+        prerelease: true
+        title: confer-head
+        files: |
+          confer-head-Linux-x86_64.tar.gz
+          confer-head-Linux-static-x86_64.tar.gz

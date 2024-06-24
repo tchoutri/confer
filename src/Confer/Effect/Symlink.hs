@@ -11,7 +11,6 @@ module Confer.Effect.Symlink
 
 import Control.Exception
 import Control.Monad
-import Control.Placeholder
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
@@ -80,7 +79,16 @@ runSymlinkIO = interpret $ \_ -> \case
         createFileLink sourcePath destinationPath
       Directory ->
         createDirectoryLink sourcePath destinationPath
-  DeleteSymlink _ -> todo
+  DeleteSymlink linkOsPath -> do
+    linkFilePath <- liftIO $ OsPath.decodeFS linkOsPath
+    sourceType <- liftIO $ do
+      metadata <- Directory.getFileMetadata linkOsPath
+      pure $ Directory.fileTypeFromMetadata metadata
+    case sourceType of
+      File ->
+        FileSystem.removeFile linkFilePath
+      Directory ->
+        FileSystem.removeDirectory linkFilePath
   TestSymlink linkOsPath expectedLinkTarget -> do
     linkFilepath <- liftIO $ OsPath.decodeFS linkOsPath
     liftIO $

@@ -20,11 +20,6 @@ extra-doc-files:
 data-dir:        runtime/lua
 tested-with:     GHC ==9.8.2
 
-flag release
-  description: Compile the project for release
-  default:     False
-  manual:      True
-
 flag development
   description: Compile the project for development
   default:     True
@@ -53,14 +48,6 @@ common ghc-options
     -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
     -fhide-source-paths -Wno-unused-do-bind -fshow-hole-constraints
     -Wno-unticked-promoted-constructors
-
-  if flag(release)
-    ghc-options:
-      -flate-specialise -funbox-strict-fields
-      -finline-generics-aggressively -fexpose-all-unfoldings
-      -Werror=extended-warnings -fdicts-strict -fmax-worker-args=16
-      -fspec-constr-recursive=16 -funbox-strict-fields
-      -Wno-unused-packages -Werror=unused-imports
 
   if flag(development)
     ghc-options: -finfo-table-map -Wno-unused-imports -Wno-unused-packages

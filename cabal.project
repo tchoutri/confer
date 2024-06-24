@@ -8,8 +8,6 @@ test-show-details: direct
 
 documentation: True
 
-optimization: 2
-
 tests: True
 
 -- package confer
