@@ -28,6 +28,9 @@ jobs:
     strategy:
       matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
     steps:
+      - name: "Install tools"
+        run: |
+            sudo apt install upx-ucl 
       - name: Checkout base repo
         uses: actions/checkout@v4
       - name: Set up Haskell
@@ -53,6 +56,8 @@ jobs:
       - name: Package the confer-head executable
         run: |
           CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
+          strip $CONFER_EXEC
+          upx -9 $CONFER_EXEC
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
           CONFER_EXEC_TAR=confer-head-${{ runner.os }}-x86_64.tar.gz
@@ -78,7 +83,7 @@ jobs:
           apk add bash curl sudo jq pkgconfig \
           zlib-dev zlib-static binutils-gold curl \
           gcc g++ gmp-dev libc-dev libffi-dev make \
-          musl-dev ncurses-dev perl tar xz git
+          musl-dev ncurses-dev perl tar xz git upx
 
       - uses: actions/checkout@v4
 
@@ -113,9 +118,11 @@ jobs:
       - name: Tar cabal head executable
         run: |
           CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
+          strip $CONFER_EXEC
+          upx -9 $CONFER_EXEC
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
-          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-x86_64.tar.gz
+          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-x86_64.tar.gz
           tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
 

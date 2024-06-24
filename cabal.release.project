@@ -6,6 +6,10 @@ documentation: False
 
 flags: -development
 
+executable-stripping: True
+
+library-stripping: True
+
 package *
   ghc-options:
     -flate-specialise -funbox-strict-fields
