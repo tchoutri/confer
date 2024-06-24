@@ -9,7 +9,9 @@ For more details about the inner workings, read the [Architecture document](./do
 
 ## 📦 Install
 
-No binaries are currently available. See the Build instructions
+Pre-release binaries are available for the following platforms:
+
+* [x86_64-linux](https://github.com/tchoutri/confer/releases/download/confer-head/confer-head-Linux-static-x86_64.tar.gz)
 
 ## 🔧 Build
 
