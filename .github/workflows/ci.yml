@@ -136,6 +136,28 @@ jobs:
           name: confer-${{ runner.os }}-static-x86_64
           path: ${{ env.CONFER_EXEC_TAR }}
 
+  
+  build-freebsd-14:
+    runs-on: ubuntu-latest
+    needs: ['tests']
+    name: ${{ matrix.ghc }} on FreeBSD 14
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test in FreeBSD
+      id: test
+      uses: vmactions/freebsd-vm@v1
+      with:
+        usesh: true
+        prepare: |
+          pkg install -y curl
+          curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+
+        run: |
+
+
+
+
+
   prerelease-head:
     name: Create a GitHub prerelease with the binary artifacts
     runs-on: ubuntu-latest
