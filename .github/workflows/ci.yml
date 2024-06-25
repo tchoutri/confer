@@ -55,17 +55,18 @@ jobs:
         run: cabal test --project-file=cabal.release.project all
       - name: Package the confer-head executable
         run: |
+          echo ARCH=$(uname -m) >> $GITHUB_ENV
           CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
           .github/workflows/process-binaries.sh
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
-          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-$(uname -m).tar.gz
+          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-${{ env.ARCH }}.tar.gz
           tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
       - name: Upload the confer-head executable
         uses: actions/upload-artifact@v3
         with:
-          name: confer-${{ runner.os }}-$(uname -m)
+          name: confer-${{ runner.os }}-${{ env.ARCH }}
           path: ${{ env.CONFER_EXEC_TAR }}
 
   build-alpine:
@@ -114,11 +115,12 @@ jobs:
 
       - name: Tar cabal head executable
         run: |
+          echo ARCH=$(uname -m) >> $GITHUB_ENV
           CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
           .github/workflows/process-binaries.sh
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
-          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-$(uname -m).tar.gz
+          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-${{ env.ARCH }}.tar.gz
           tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
 
@@ -138,6 +140,8 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         name: confer-Linux-x86_64
+    - run: |
+          mv confer-head-Linux-x86_64.tar.gz 
 
     - uses: actions/download-artifact@v3
       with:
@@ -145,7 +149,7 @@ jobs:
 
     - uses: actions/download-artifact@v3
       with:
-        name: confer-macOS-aarch64
+        name: confer-macOS-arm64
 
     - name: Create GitHub prerelease
       uses: marvinpinto/action-automatic-releases@v1.2.1
@@ -157,4 +161,4 @@ jobs:
         files: |
           confer-head-Linux-x86_64.tar.gz
           confer-head-Linux-static-x86_64.tar.gz
-          confer-head-macOS-aarch64.tar.gz
+          confer-head-macOS-arm64.tar.gz
