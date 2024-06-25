@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
-
-ldd $CONFER_EXEC
+CONFER_PATH="distribution/confer"
 
 case "$(uname -s)" in
-        Linux*) strip $CONFER_EXEC && upx -9 $CONFER_EXEC;;
-        Darwin*) strip $CONFER_EXEC;;
+        Linux*) 
+          upx -9 $CONFER_PATH
+          ;;
+        Darwin*)
+            echo "upx crashes on macOS Ventura and above" ;;
 esac
+

@@ -51,15 +51,21 @@ jobs:
         uses: actions/cache@v4.0.2
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-cabal-${{ hashFiles('**/plan.json') }}
+          key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-${{ hashFiles('**/plan.json') }}
           restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}-
+
       - name: Build
         run: cabal build --project-file=cabal.release.project
+
       - name: Test
         run: cabal test --project-file=cabal.release.project all
+
+      - name: Install
+        run: cabal install --project-file=cabal.release.project --installdir=distribution --install-method=copy
+
       - name: Package the confer-head executable
         run: |
-          CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
+          CONFER_EXEC=distribution/confer
           .github/workflows/process-binaries.sh
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
@@ -107,8 +113,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ${{ runner.os }}-ghc-9.8.2-cabal-${{ hashFiles('**/plan.json') }}
-          restore-keys: ${{ runner.os }}-ghc-9.8.2-
+          key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-${{ hashFiles('**/plan.json') }}
+          restore-keys: ${{ runner.os }}-${{ steps.setup.outputs.ghc-version }}-
 
       - name: Enable statically linked executables
         run: |
@@ -120,9 +126,12 @@ jobs:
       - name: Test
         run: cabal test --project-file=cabal.release.project all
 
+      - name: Install
+        run: cabal install --project-file=cabal.release.project --installdir=distribution --install-method=copy
+
       - name: Tar cabal head executable
         run: |
-          CONFER_EXEC=$(cabal list-bin --project-file=cabal.release.project confer:exe:confer)
+          CONFER_EXEC=distribution/confer
           .github/workflows/process-binaries.sh
           DIR=$(dirname $CONFER_EXEC)
           FILE=$(basename $CONFER_EXEC)
