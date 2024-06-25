@@ -11,7 +11,8 @@ For more details about the inner workings, read the [Architecture document](./do
 
 Pre-release binaries are available for the following platforms:
 
-* [Linux-x86_64](https://github.com/tchoutri/confer/releases/download/confer-head/confer-head-Linux-static-x86_64.tar.gz)
+* [Linux-x86_64-musl (statically linked)](https://github.com/tchoutri/confer/releases/download/confer-head/confer-head-Linux-static-x86_64.tar.gz)
+* [Linux-x86_64-glibc (dynamically linked)](https://github.com/tchoutri/confer/releases/download/confer-head/confer-head-Linux-x86_64.tar.gz)
 * [macOS-arm64](https://github.com/tchoutri/confer/releases/download/confer-head/confer-head-macOS-arm64.tar.gz)
 
 ## 🔧 Build
