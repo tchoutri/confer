@@ -2,11 +2,13 @@ module Main where
 
 import Data.Function ((&))
 import Data.Map.Strict qualified as Map
+import Data.Version (showVersion)
 import Effectful
 import Effectful.Error.Static
 import Effectful.FileSystem
 import Options.Applicative
 import Options.Applicative.Types
+import Paths_confer (version)
 import System.IO
 import System.OsPath
 import System.OsPath qualified as OsPath
@@ -90,7 +92,13 @@ runOptions (Options dryRun configurationFile Deploy) = do
         & runSymlinkIO
 
 withInfo :: Parser a -> String -> ParserInfo a
-withInfo opts desc = info (helper <*> opts) $ progDesc desc
+withInfo opts desc =
+  info
+    ( simpleVersioner (showVersion version)
+        <*> helper
+        <*> opts
+    )
+    $ progDesc desc
 
 osPathOption :: ReadM OsPath
 osPathOption = maybeReader OsPath.encodeUtf

@@ -5,6 +5,7 @@ module Confer.Config.Evaluator
 
 import Control.Monad (void)
 import Control.Placeholder
+import Data.Maybe (isNothing)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
@@ -19,7 +20,10 @@ import HsLua.Marshalling (Peeker, Result)
 import HsLua.Marshalling qualified as Lua
 import HsLua.Module.System qualified as Lua.System
 import HsLua.Packaging.Module qualified as Lua
+import Paths_confer (getDataFileName)
+import System.Directory qualified as Directory
 import System.IO (utf16le, utf8)
+import System.IO.Unsafe qualified as Unsafe
 import System.Info qualified as System
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
@@ -28,9 +32,6 @@ import System.OsPath.Encoding qualified as OsPath
 import Confer.API.Host qualified as API
 import Confer.API.User qualified as API
 import Confer.Config.Types
-import Data.Maybe (isNothing)
-import System.Directory qualified as Directory
-import System.IO.Unsafe qualified as Unsafe
 
 adjustConfiguration
   :: Text
@@ -58,8 +59,9 @@ loadConfiguration pathToConfigFile = do
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
-    liftIO $ Text.putStrLn "Loading \"./runtime/lua/confer.lua\""
-    Lua.dofile (Just "./runtime/lua/confer.lua")
+    conferLuaFilePath <- liftIO $ getDataFileName "runtime/lua/confer.lua"
+    liftIO $ Text.putStrLn $ "Loading " <> Text.pack conferLuaFilePath
+    Lua.dofile (Just conferLuaFilePath)
     Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule

@@ -17,7 +17,7 @@ extra-doc-files:
   doc/*.md
   README.md
 
-data-dir:        runtime/lua
+data-files:      runtime/lua/confer.lua
 tested-with:     GHC ==9.8.2
 
 flag development
@@ -71,6 +71,8 @@ library
     Confer.Config.Types
     Confer.Effect.Symlink
 
+  other-modules:   Paths_confer
+  autogen-modules: Paths_confer
   build-depends:
     , aeson
     , base
@@ -98,10 +100,13 @@ library
   hs-source-dirs:  src
 
 executable confer
-  import:         extensions
-  import:         ghc-options
-  import:         rts-options
-  main-is:        Main.hs
+  import:          extensions
+  import:          ghc-options
+  import:          rts-options
+  hs-source-dirs:  app
+  main-is:         Main.hs
+  other-modules:   Paths_confer
+  autogen-modules: Paths_confer
   build-depends:
     , base
     , confer
@@ -113,8 +118,6 @@ executable confer
 
   if flag(development)
     build-depends: placeholder
-
-  hs-source-dirs: app
 
 test-suite confer-test
   import:         extensions
