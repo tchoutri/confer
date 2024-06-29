@@ -6,7 +6,6 @@ module Confer.Effect.Symlink
   , runSymlinkPure
   , Symlink (..)
   , SymlinkError (..)
-  , formatSymlinkError
   ) where
 
 import Control.Exception
@@ -140,20 +139,3 @@ runSymlinkPure virtualFS = reinterpret (State.evalState virtualFS) $ \_ -> \case
                     actualLinkTarget
                 )
       Nothing -> pure $ Left (DoesNotExist linkPath)
-
-formatSymlinkError :: SymlinkError -> Text
-formatSymlinkError (DoesNotExist path) =
-  "[!] "
-    <> display (Text.pack . show $ path)
-    <> " does not exist"
-formatSymlinkError (IsNotSymlink path) =
-  "[!] "
-    <> display (Text.pack . show $ path)
-    <> " is not a symbolic link"
-formatSymlinkError (WrongTarget linkPath expectedTarget actualTarget) =
-  "[!] "
-    <> display (Text.pack . show $ linkPath)
-    <> " points to "
-    <> display (Text.pack . show $ actualTarget)
-    <> " instead of pointing to "
-    <> display (Text.pack . show $ expectedTarget)

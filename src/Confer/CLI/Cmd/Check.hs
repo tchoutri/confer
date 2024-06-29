@@ -24,10 +24,10 @@ import System.OsPath qualified as OsPath
 import Validation
 
 import Confer.CLI.Errors (CLIError (..))
+import Confer.CLI.Errors qualified as Errors
 import Confer.Config.Evaluator
 import Confer.Config.Types
 import Confer.Effect.Symlink (Symlink, SymlinkError (..))
-import Confer.Effect.Symlink qualified as Errors
 import Confer.Effect.Symlink qualified as Symlink
 
 check
@@ -46,9 +46,6 @@ check deployments = do
         validateSymlink fact
   case result of
     Failure errors -> do
-      forM_ errors $
-        \e ->
-          liftIO $ Text.putStrLn $ Errors.formatSymlinkError e
       Error.throwError (SymlinkErrors errors)
     Success _ -> pure ()
 
