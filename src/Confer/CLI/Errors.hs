@@ -14,6 +14,7 @@ import Confer.Effect.Symlink (SymlinkError (..))
 import Confer.Effect.Symlink qualified as Symlink
 import Control.Monad.IO.Class (liftIO)
 import Data.Foldable
+import Data.Word (Word8)
 
 data CLIError
   = NoDefaultConfigurationFile
@@ -22,15 +23,35 @@ data CLIError
   | SymlinkErrors (NonEmpty SymlinkError)
   deriving stock (Eq, Show)
 
+newtype ErrorCode = ErrorCode Word8
+  deriving newtype (Eq, Show, Ord)
+
+instance Display ErrorCode where
+  displayBuilder (ErrorCode c) = "[CONFER-" <> displayBuilder c <> "]"
+
+cliErrorToCode :: CLIError -> ErrorCode
+cliErrorToCode = \case
+  NoDefaultConfigurationFile -> ErrorCode 156
+  NoUserProvidedConfigurationFile{} -> ErrorCode 169
+  NoDeploymentsAvailable{} -> ErrorCode 123
+  SymlinkErrors{} -> ErrorCode 192
+
+symlinkErrorToCode :: SymlinkError -> ErrorCode
+symlinkErrorToCode = \case
+  DoesNotExist{} -> ErrorCode 234
+  IsNotSymlink{} -> ErrorCode 142
+  WrongTarget{} -> ErrorCode 102
+
 reportError :: CLIError -> IO ()
 reportError NoDefaultConfigurationFile =
-  System.die "[!] Could not find configuration file at ./deployments.lua"
-reportError (NoUserProvidedConfigurationFile osPath) = do
+  System.die $ Text.unpack $ display (cliErrorToCode NoDefaultConfigurationFile) <> " Could not find configuration file at ./deployments.lua"
+reportError e@(NoUserProvidedConfigurationFile osPath) = do
   filePath <- OsPath.decodeFS osPath
-  System.die $ "[!] Could not find configuration file at" <> filePath
-reportError (NoDeploymentsAvailable os arch hostname) = do
+  System.die $ Text.unpack $ display (cliErrorToCode e) <> " Could not find configuration file at" <> Text.pack filePath
+reportError e@(NoDeploymentsAvailable os arch hostname) = do
   let message =
-        "[!] Could not find deployments to run on "
+        display (cliErrorToCode e)
+          <> " Could not find deployments to run on "
           <> display arch
           <> "-"
           <> display os
@@ -39,6 +60,24 @@ reportError (NoDeploymentsAvailable os arch hostname) = do
   System.die $ Text.unpack message
 reportError (SymlinkErrors errors) = do
   forM_ errors $
-    \e ->
-      liftIO $ Text.putStrLn $ Symlink.formatSymlinkError e
+    \err ->
+      liftIO $ Text.putStrLn $ formatSymlinkError err
   System.exitFailure
+
+formatSymlinkError :: SymlinkError -> Text
+formatSymlinkError e@(DoesNotExist path) =
+  display (symlinkErrorToCode e)
+    <> " "
+    <> display (Text.pack . show $ path)
+    <> " does not exist"
+formatSymlinkError e@(IsNotSymlink path) =
+  display (symlinkErrorToCode e)
+    <> display (Text.pack . show $ path)
+    <> " is not a symbolic link"
+formatSymlinkError e@(WrongTarget linkPath expectedTarget actualTarget) =
+  display (symlinkErrorToCode e)
+    <> display (Text.pack . show $ linkPath)
+    <> " points to "
+    <> display (Text.pack . show $ actualTarget)
+    <> " instead of pointing to "
+    <> display (Text.pack . show $ expectedTarget)

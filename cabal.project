@@ -10,11 +10,16 @@ documentation: True
 
 tests: True
 
--- package confer
---   ghc-options: -fhpc
+profiling: True
+
+library-profiling: True
+
+semaphore: True
+
+jobs: $ncpus
 
 package *
-  ghc-options: +RTS -A32m -RTS -j -haddock
+  ghc-options: +RTS -A32m -RTS -haddock
 
 allow-newer:
   hslua-aeson:unordered-containers

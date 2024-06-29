@@ -50,7 +50,9 @@ common ghc-options
     -Wno-unticked-promoted-constructors
 
   if flag(development)
-    ghc-options: -finfo-table-map -Wno-unused-imports -Wno-unused-packages
+    ghc-options:
+      -finfo-table-map -Wno-unused-imports -Wno-unused-packages -prof
+      -fprof-auto -with-rtsopts=-p
 
 common rts-options
   ghc-options: -rtsopts -threaded "-with-rtsopts=-N -T"
