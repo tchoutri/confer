@@ -52,7 +52,7 @@ parseOptions =
     <$> switch
       (long "dry-run" <> help "Do not perform actual file system operations")
     <*> switch (long "verbose" <> help "Make the program more talkative")
-    <*> optional (option osPathOption (long "deployments-file" <> metavar "FILENAME" <> help "Use the specified the deployments.lua file"))
+    <*> optional (option osPathOption (long "deployments-file" <> metavar "FILENAME" <> help "Use the specified deployments.lua file"))
     <*> parseCommand
 
 parseCommand :: Parser Command

@@ -24,6 +24,9 @@ It is configured in Lua. The [Lua API](#lua-api) enables you to decide where to 
 #### `--dry-run`
 Simulate the actions to be executed but doesn't do them.
 
+#### `--deployments-file`
+Use the specified deployments.lua file
+
 #### `--verbose`
 Make the execution more verbose about what it does.
 
