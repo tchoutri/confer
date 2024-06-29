@@ -22,6 +22,7 @@ import Confer.Effect.Symlink
 
 data Options = Options
   { dryRun :: Bool
+  , verbose :: Bool
   , configurationFile :: Maybe OsPath
   , cliCommand :: Command
   }
@@ -50,6 +51,7 @@ parseOptions =
   Options
     <$> switch
       (long "dry-run" <> help "Do not perform actual file system operations")
+    <*> switch (long "verbose" <> help "Make the program more talkative")
     <*> optional (option osPathOption (long "deployments-file" <> metavar "FILENAME" <> help "Use the specified the deployments.lua file"))
     <*> parseCommand
 
@@ -72,23 +74,23 @@ runOptions
      )
   => Options
   -> Eff es ()
-runOptions (Options dryRun configurationFile Check) = do
-  deployments <- processConfiguration configurationFile
+runOptions (Options dryRun verbose configurationFile Check) = do
+  deployments <- processConfiguration verbose configurationFile
   if dryRun
     then
-      Cmd.check deployments
+      Cmd.check verbose deployments
         & runSymlinkPure Map.empty
     else
-      Cmd.check deployments
+      Cmd.check verbose deployments
         & runSymlinkIO
-runOptions (Options dryRun configurationFile Deploy) = do
-  deployments <- processConfiguration configurationFile
+runOptions (Options dryRun verbose configurationFile Deploy) = do
+  deployments <- processConfiguration verbose configurationFile
   if dryRun
     then
-      Cmd.deploy deployments
+      Cmd.deploy verbose deployments
         & runSymlinkPure Map.empty
     else
-      Cmd.deploy deployments
+      Cmd.deploy verbose deployments
         & runSymlinkIO
 
 withInfo :: Parser a -> String -> ParserInfo a

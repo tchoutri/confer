@@ -27,9 +27,10 @@ deploy
      , Symlink :> es
      , IOE :> es
      )
-  => Vector Deployment
+  => Bool
+  -> Vector Deployment
   -> Eff es ()
-deploy deployments = do
+deploy verbose deployments = do
   forM_ deployments $ \d ->
     forM_ d.facts $ \fact -> do
       filepath <- liftIO $ OsPath.decodeFS fact.destination
