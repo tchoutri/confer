@@ -1,5 +1,7 @@
 module Confer.Config.ConfigFile
   ( processConfiguration
+  , determineDeploymentOS
+  , determineDeploymentArch
   ) where
 
 import Control.Monad (when)
@@ -21,6 +23,7 @@ import System.OsPath qualified as OsPath
 import Confer.CLI.Errors
 import Confer.Config.Evaluator
 import Confer.Config.Types (Deployment, DeploymentArchitecture (..), DeploymentOS (..))
+import Data.Text (Text)
 
 -- | This function looks up the configuration file in the following places
 -- (ordered by position):
@@ -33,28 +36,44 @@ processConfiguration
      , Error CLIError :> es
      )
   => Bool
+  -- ^ Verbose
   -> Maybe OsPath
+  -- ^ Potential configuration file path
+  -> DeploymentArchitecture
+  -- ^ Configured architecture
+  -> DeploymentOS
+  -- ^ Configured operating system
+  -> Maybe Text
+  -- ^ hostname override
   -> Eff es (Vector Deployment)
-processConfiguration verbose mConfigurationFilePath = do
+processConfiguration verbose mConfigurationFilePath deploymentArch deploymentOS mHostname = do
   pathToConfigFile <- determineConfigurationFilePath mConfigurationFilePath
   loadConfiguration verbose pathToConfigFile >>= \case
     Right allDeployments -> do
-      let currentOS = OS (Text.pack System.os)
-      let currentArch = Arch (Text.pack System.arch)
-      currentHost <- Text.pack <$> liftIO getHostName
-      when verbose $ do
-        liftIO $ Text.putStrLn $ "Hostname: " <> currentHost <> " (detected)"
-        liftIO $ Text.putStrLn $ "OS: " <> display currentOS <> " (detected)"
-        liftIO $ Text.putStrLn $ "Architecture: " <> display currentArch <> " (detected)"
+      currentHost <- case mHostname of
+        Nothing -> do
+          inferredHostname <- Text.pack <$> liftIO getHostName
+          when verbose $
+            liftIO $
+              Text.putStrLn $
+                "Hostname: " <> display inferredHostname <> " (detected)"
+          pure inferredHostname
+        Just overridenHostname -> do
+          when verbose $
+            liftIO $
+              Text.putStrLn $
+                "Hostname: " <> display overridenHostname <> " (overriden)"
+          pure overridenHostname
+
       let deployments =
             adjustConfiguration
               currentHost
-              currentOS
-              currentArch
+              deploymentOS
+              deploymentArch
               allDeployments
       when (Vector.null deployments) $
         throwError $
-          NoDeploymentsAvailable currentOS currentArch currentHost
+          NoDeploymentsAvailable deploymentOS deploymentArch currentHost
       pure deployments
     Left e -> error e
 
@@ -63,7 +82,7 @@ determineConfigurationFilePath
   => Maybe OsPath
   -> Eff es OsPath
 determineConfigurationFilePath mCLIConfigFilePath =
-  case checkCLIOptions mCLIConfigFilePath of
+  case mCLIConfigFilePath of
     Just osPath -> do
       filePath <- liftIO $ OsPath.decodeFS osPath
       FileSystem.doesFileExist filePath
@@ -79,6 +98,44 @@ determineConfigurationFilePath mCLIConfigFilePath =
             FileSystem.makeAbsolute "deployments.lua"
               >>= (liftIO . OsPath.encodeFS)
 
-checkCLIOptions :: Maybe OsPath -> Maybe OsPath
-checkCLIOptions Nothing = Nothing
-checkCLIOptions (Just osPath) = Just osPath
+determineDeploymentOS
+  :: IOE :> es
+  => Bool
+  -- ^ Verbose mode
+  -> Maybe DeploymentOS
+  -- Potential override
+  -> Eff es DeploymentOS
+-- Final result
+determineDeploymentOS verbose = \case
+  Nothing -> do
+    let inferredOS = OS (Text.pack System.os)
+    when verbose $ do
+      liftIO $ Text.putStrLn $ "OS: " <> display inferredOS <> " (detected)"
+    pure inferredOS
+  Just overridenOS -> do
+    when verbose $
+      liftIO $
+        Text.putStrLn $
+          "OS: " <> display overridenOS <> " (overriden)"
+    pure overridenOS
+
+determineDeploymentArch
+  :: IOE :> es
+  => Bool
+  -- ^ Verbose mode
+  -> Maybe DeploymentArchitecture
+  -- Potential override
+  -> Eff es DeploymentArchitecture
+-- Final result
+determineDeploymentArch verbose = \case
+  Nothing -> do
+    let inferredArch = Arch (Text.pack System.arch)
+    when verbose $ do
+      liftIO $ Text.putStrLn $ "Architecture: " <> display inferredArch <> " (detected)"
+    pure inferredArch
+  Just overridenArch -> do
+    when verbose $
+      liftIO $
+        Text.putStrLn $
+          "Architecture: " <> display overridenArch <> " (overriden)"
+    pure overridenArch

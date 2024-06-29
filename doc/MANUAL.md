@@ -39,7 +39,7 @@ Display the help message.
 ### Configuration overrides
 
 #### `--arch=<arch>`
-Override the detected architecturein the configuration file.
+Override the detected architecture in the configuration file.
 
 With `arch` as:
 

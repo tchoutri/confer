@@ -50,9 +50,7 @@ common ghc-options
     -Wno-unticked-promoted-constructors
 
   if flag(development)
-    ghc-options:
-      -finfo-table-map -Wno-unused-imports -Wno-unused-packages -prof
-      -fprof-auto -with-rtsopts=-p
+    ghc-options: -finfo-table-map -Wno-unused-imports -Wno-unused-packages
 
 common rts-options
   ghc-options: -rtsopts -threaded "-with-rtsopts=-N -T"
@@ -82,6 +80,7 @@ library
     , directory
     , effectful
     , effectful-core
+    , extra
     , filepath
     , hostname
     , hslua-aeson
@@ -117,6 +116,7 @@ executable confer
     , effectful-core
     , filepath
     , optparse-applicative
+    , text
 
   if flag(development)
     build-depends: placeholder
@@ -130,6 +130,7 @@ test-suite confer-test
   main-is:        Main.hs
   other-modules:
     Confer.CLI.Cmd.CheckTest
+    Confer.EvaluatorTest
     Utils
 
   other-modules:
