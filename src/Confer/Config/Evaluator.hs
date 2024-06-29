@@ -3,7 +3,7 @@ module Confer.Config.Evaluator
   , adjustConfiguration
   ) where
 
-import Control.Monad (void)
+import Control.Monad (void, when)
 import Control.Placeholder
 import Data.Maybe (isNothing)
 import Data.Text (Text)
@@ -52,22 +52,29 @@ loadConfiguration
   :: ( IOE :> es
      , FileSystem :> es
      )
-  => OsPath
+  => Bool
+  -> OsPath
   -> Eff es (Either String (Vector Deployment))
-loadConfiguration pathToConfigFile = do
+loadConfiguration verbose pathToConfigFile = do
   userModule <- API.mkUserModule
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
     conferLuaFilePath <- liftIO $ getDataFileName "runtime/lua/confer.lua"
-    liftIO $ Text.putStrLn $ "Loading " <> Text.pack conferLuaFilePath
+    when verbose $
+      liftIO $
+        Text.putStrLn $
+          "Loading " <> Text.pack conferLuaFilePath
     Lua.dofile (Just conferLuaFilePath)
     Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule
     Lua.registerModule hostModule
     configFilePath <- liftIO $ OsPath.decodeFS pathToConfigFile
-    liftIO $ Text.putStrLn $ "Loading " <> Text.pack (show configFilePath)
+    when verbose $
+      liftIO $
+        Text.putStrLn $
+          "Loading " <> Text.pack configFilePath
     Lua.dofile (Just configFilePath)
       >>= \case Lua.OK -> pure (); _ -> Lua.throwErrorAsException
     Lua.resultToEither <$> Lua.runPeeker peekConfig Lua.top

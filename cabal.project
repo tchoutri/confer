@@ -14,7 +14,9 @@ profiling: True
 
 library-profiling: True
 
-semaphore: True
+-- semaphore: True
+
+-- multi-repl: True
 
 jobs: $ncpus
 

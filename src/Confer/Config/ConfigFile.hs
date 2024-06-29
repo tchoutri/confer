@@ -32,18 +32,20 @@ processConfiguration
      , FileSystem :> es
      , Error CLIError :> es
      )
-  => Maybe OsPath
+  => Bool
+  -> Maybe OsPath
   -> Eff es (Vector Deployment)
-processConfiguration mConfigurationFilePath = do
+processConfiguration verbose mConfigurationFilePath = do
   pathToConfigFile <- determineConfigurationFilePath mConfigurationFilePath
-  loadConfiguration pathToConfigFile >>= \case
+  loadConfiguration verbose pathToConfigFile >>= \case
     Right allDeployments -> do
       let currentOS = OS (Text.pack System.os)
       let currentArch = Arch (Text.pack System.arch)
       currentHost <- Text.pack <$> liftIO getHostName
-      liftIO $ Text.putStrLn $ "Hostname: " <> currentHost <> " (detected)"
-      liftIO $ Text.putStrLn $ "OS: " <> display currentOS <> " (detected)"
-      liftIO $ Text.putStrLn $ "Architecture: " <> display currentArch <> " (detected)"
+      when verbose $ do
+        liftIO $ Text.putStrLn $ "Hostname: " <> currentHost <> " (detected)"
+        liftIO $ Text.putStrLn $ "OS: " <> display currentOS <> " (detected)"
+        liftIO $ Text.putStrLn $ "Architecture: " <> display currentArch <> " (detected)"
       let deployments =
             adjustConfiguration
               currentHost
