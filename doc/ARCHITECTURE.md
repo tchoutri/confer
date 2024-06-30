@@ -6,15 +6,20 @@
 
 The CLI is the main interaction point with *confer*. 
 
+The idea is to normalise a lot of arguments, and do a maximum of IO
+that is not directly related to the business logic of dealing with
+symbolic links.
+
 ### Symlink Effect
 
 The Symlink effect is the abstraction layer that implements the business logic
 and enforces its invariants at all time. It declares the operations that 
 are performed on symbolic links, and provides two interpreters for them:
-  * The `FileSystem` interpreter is the *effectful* interpreter that will modify
+  * The *“IO”* interpreter is the *effectful* interpreter that will modify
   your file system. 
-  * The `Pure` interpreter does not modify the file system. It is used when the
-  user calls the programw with `--dry-run` and will only perform sanity checks
+  * The *“Pure”* interpreter does not modify the file system. 
+  It is used when the user uses `--dry-run` and will only display what 
+  the program plans to do.
 
 ## Lua Runtime 
 
