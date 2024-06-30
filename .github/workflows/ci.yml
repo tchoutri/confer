@@ -108,7 +108,7 @@ jobs:
           cabal configure --enable-tests
 
       - name: Freeze
-        run: cabal freeze --project-file=cabal.release.project
+        run: cabal freeze --project-file=cabal.static.project
 
       - uses: actions/cache@v4
         with:
@@ -116,18 +116,14 @@ jobs:
           key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-${{ hashFiles('**/plan.json') }}
           restore-keys: ${{ runner.os }}-${{ steps.setup.outputs.ghc-version }}-
 
-      - name: Enable statically linked executables
-        run: |
-          echo 'executable-static: true' >> cabal.release.project
-
       - name: Build
-        run: cabal build --project-file=cabal.release.project
+        run: cabal build --project-file=cabal.static.project
 
       - name: Test
-        run: cabal test --project-file=cabal.release.project all
+        run: cabal test --project-file=cabal.static.project all
 
       - name: Install
-        run: cabal install --project-file=cabal.release.project --installdir=distribution --install-method=copy
+        run: cabal install --project-file=cabal.static.project --installdir=distribution --install-method=copy
 
       - name: Tar cabal head executable
         run: |

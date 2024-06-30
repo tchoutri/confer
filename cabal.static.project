@@ -1,0 +1,7 @@
+import: ./cabal.release.project
+
+executable-static: true
+
+package confer
+  ghc-options: -static
+  ld-options: -static -pthread
