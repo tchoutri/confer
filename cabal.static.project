@@ -3,5 +3,5 @@ import: ./cabal.release.project
 executable-static: true
 
 package confer
-  ghc-options: -static
+  ghc-options: -static -optl-static -split-sections
   ld-options: -static -pthread

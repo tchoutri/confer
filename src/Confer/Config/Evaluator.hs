@@ -4,7 +4,7 @@ module Confer.Config.Evaluator
   ) where
 
 import Control.Monad (void, when)
-import Control.Placeholder
+
 import Data.Maybe (isNothing)
 import Data.Text (Text)
 import Data.Text qualified as Text
