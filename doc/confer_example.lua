@@ -5,13 +5,13 @@ local user = require("user")
 local git_deployment = confer.fact({
   name = "git",
   source = ".gitconfig",
-  destination = user.home
+  destination = user.home .. "/.gitconfig"
 })
 
 local zsh_deployment = confer.fact({
   name = "zsh",
   source = ".zsh",
-  destination = user.home
+  destination = user.home .. "/.zsh"
 })
 
 local kitty_deployment = confer.fact({
@@ -23,7 +23,7 @@ local kitty_deployment = confer.fact({
 local irssi_deployment = confer.fact({
   name = "irssi",
   source = ".irssi",
-  destination = user.home
+  destination = user.home .. "/.irssi"
 })
 
 -- Deployments

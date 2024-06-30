@@ -10,10 +10,6 @@ documentation: True
 
 tests: True
 
-profiling: True
-
-library-profiling: True
-
 -- semaphore: True
 
 -- multi-repl: True
