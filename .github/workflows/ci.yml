@@ -148,15 +148,15 @@ jobs:
     needs: ['tests', 'build-alpine']
 
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: confer-Linux-x86_64
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: confer-Linux-static-x86_64
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: confer-macOS-arm64
 
