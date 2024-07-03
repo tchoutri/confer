@@ -78,68 +78,68 @@ jobs:
           name: confer-${{ runner.os }}-${{ env.ARCH }}
           path: ${{ env.CONFER_EXEC_TAR }}
 
-  build-alpine:
-    name: Build statically linked using alpine
-    runs-on: ubuntu-latest
-    container: 'alpine:3.19'
-    needs: ['tests']
-    steps:
-      - name: Install extra dependencies
-        shell: sh
-        run: |
-          apk add bash curl sudo jq pkgconfig \
-          zlib-dev zlib-static binutils-gold curl \
-          gcc g++ gmp-dev libc-dev libffi-dev make \
-          musl-dev ncurses-dev perl tar xz git upx
-
-      - uses: actions/checkout@v4
-
-      - uses: haskell-actions/setup@v2
-        id: setup-haskell
-        with:
-          ghc-version: '9.8.2'
-          cabal-version: 'latest'
-
-      - name: Configure
-        run: | 
-          ARCHITECTURE=$(uname -m)
-          echo "ARCH=$ARCHITECTURE" >> $GITHUB_ENV
-          echo ${{ env.ARCH }}
-          cabal configure --enable-tests
-
-      - name: Freeze
-        run: cabal freeze --project-file=cabal.static.project
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ steps.setup-haskell.outputs.cabal-store }}
-          key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-${{ hashFiles('**/plan.json') }}
-          restore-keys: ${{ runner.os }}-${{ steps.setup.outputs.ghc-version }}-
-
-      - name: Build
-        run: cabal build --project-file=cabal.static.project
-
-      - name: Test
-        run: cabal test --project-file=cabal.static.project all
-
-      - name: Install
-        run: cabal install --project-file=cabal.static.project --installdir=distribution --install-method=copy
-
-      - name: Tar cabal head executable
-        run: |
-          CONFER_EXEC=distribution/confer
-          .github/workflows/process-binaries.sh
-          DIR=$(dirname $CONFER_EXEC)
-          FILE=$(basename $CONFER_EXEC)
-          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-${{ env.ARCH }}.tar.gz
-          tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
-          echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
-
-      - name: Upload confer executable to workflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: confer-${{ runner.os }}-static-x86_64
-          path: ${{ env.CONFER_EXEC_TAR }}
+  # build-alpine:
+  #   name: Build statically linked using alpine
+  #   runs-on: ubuntu-latest
+  #   container: 'alpine:3.19'
+  #   needs: ['tests']
+  #   steps:
+  #     - name: Install extra dependencies
+  #       shell: sh
+  #       run: |
+  #         apk add bash curl sudo jq pkgconfig \
+  #         zlib-dev zlib-static binutils-gold curl \
+  #         gcc g++ gmp-dev libc-dev libffi-dev make \
+  #         musl-dev ncurses-dev perl tar xz git upx
+  #
+  #     - uses: actions/checkout@v4
+  #
+  #     - uses: haskell-actions/setup@v2
+  #       id: setup-haskell
+  #       with:
+  #         ghc-version: '9.8.2'
+  #         cabal-version: 'latest'
+  #
+  #     - name: Configure
+  #       run: | 
+  #         ARCHITECTURE=$(uname -m)
+  #         echo "ARCH=$ARCHITECTURE" >> $GITHUB_ENV
+  #         echo ${{ env.ARCH }}
+  #         cabal configure --enable-tests
+  #
+  #     - name: Freeze
+  #       run: cabal freeze --project-file=cabal.static.project
+  #
+  #     - uses: actions/cache@v4
+  #       with:
+  #         path: ${{ steps.setup-haskell.outputs.cabal-store }}
+  #         key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-${{ hashFiles('**/plan.json') }}
+  #         restore-keys: ${{ runner.os }}-${{ steps.setup.outputs.ghc-version }}-
+  #
+  #     - name: Build
+  #       run: cabal build --project-file=cabal.static.project
+  #
+  #     - name: Test
+  #       run: cabal test --project-file=cabal.static.project all
+  #
+  #     - name: Install
+  #       run: cabal install --project-file=cabal.static.project --installdir=distribution --install-method=copy
+  #
+  #     - name: Tar cabal head executable
+  #       run: |
+  #         CONFER_EXEC=distribution/confer
+  #         .github/workflows/process-binaries.sh
+  #         DIR=$(dirname $CONFER_EXEC)
+  #         FILE=$(basename $CONFER_EXEC)
+  #         CONFER_EXEC_TAR=confer-head-${{ runner.os }}-static-${{ env.ARCH }}.tar.gz
+  #         tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
+  #         echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
+  #
+  #     - name: Upload confer executable to workflow artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: confer-${{ runner.os }}-static-x86_64
+  #         path: ${{ env.CONFER_EXEC_TAR }}
 
   prerelease-head:
     name: Create a GitHub prerelease with the binary artifacts
@@ -155,6 +155,9 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         name: confer-Linux-static-x86_64
+    # - uses: actions/download-artifact@v3
+    #   with:
+    #     name: confer-Linux-static-x86_64
 
     - uses: actions/download-artifact@v4
       with:
@@ -169,5 +172,5 @@ jobs:
         title: confer-head
         files: |
           confer-head-Linux-x86_64.tar.gz
-          confer-head-Linux-static-x86_64.tar.gz
+          # confer-head-Linux-static-x86_64.tar.gz
           confer-head-macOS-arm64.tar.gz
