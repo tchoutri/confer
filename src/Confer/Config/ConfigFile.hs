@@ -5,7 +5,7 @@ module Confer.Config.ConfigFile
   ) where
 
 import Control.Monad (when)
-import Control.Placeholder
+
 import Data.Text qualified as Text
 import Data.Text.Display
 import Data.Text.IO qualified as Text

@@ -1,7 +1,7 @@
 module Confer.CLI.Cmd.Deploy (deploy) where
 
 import Control.Monad
-import Control.Placeholder
+
 import Data.Text.Display
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
