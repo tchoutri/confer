@@ -19,6 +19,7 @@ import Test.Tasty.HUnit ()
 import Confer.CLI.Errors
 import Confer.Effect.Symlink (Symlink)
 import Confer.Effect.Symlink qualified as Symlink
+import Control.Monad (join)
 import Utils
 
 spec :: TestEff TestTree
@@ -36,7 +37,7 @@ testExistingSymlink :: TestEff ()
 testExistingSymlink =
   Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Symlink.runSymlinkIO $ do
+      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
@@ -44,13 +45,13 @@ testExistingSymlink =
         Symlink.testSymlink osLinkPath osDestinationPath
       case result of
         Left e -> Error.throwError (SymlinkErrors $ NE.singleton e)
-        Right a -> pure a
+        Right _a -> pure ()
 
 testNonExistingSymlink :: TestEff ()
 testNonExistingSymlink =
   Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Symlink.runSymlinkIO $ do
+      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
@@ -63,7 +64,7 @@ testSymlinkToNonExistingTarget :: TestEff ()
 testSymlinkToNonExistingTarget =
   Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Symlink.runSymlinkIO $ do
+      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath <> "-wrong"
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
@@ -74,7 +75,7 @@ testSymlinkToWrongTarget :: TestEff ()
 testSymlinkToWrongTarget =
   Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Symlink.runSymlinkIO $ do
+      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath <> "-wrong"
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
@@ -85,7 +86,7 @@ testSymlinkToWrongTarget =
 testNonSymlink :: TestEff ()
 testNonSymlink =
   Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ -> do
-    result <- Symlink.runSymlinkIO $ do
+    result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
       osFilepath <- liftIO $ OsPath.encodeFS filepath
       Symlink.testSymlink osFilepath [osp| lol |]
     assertIsNotSymlink result
