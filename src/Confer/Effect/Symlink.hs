@@ -29,8 +29,11 @@ import System.IO.Error
 import System.OsPath qualified as OsPath
 
 data SymlinkError
-  = DoesNotExist OsPath
+  = -- | The expected path is not present
+    DoesNotExist OsPath
   | IsNotSymlink OsPath
+  | -- | The path is unexpectedly present
+    AlreadyExists OsPath
   | WrongTarget
       OsPath
       -- ^ Path to the symbolic link
@@ -62,7 +65,7 @@ testSymlink linkPath expectedLinkTarget =
   send (TestSymlink linkPath expectedLinkTarget)
 
 runSymlinkIO
-  :: (IOE :> es, FileSystem :> es)
+  :: (IOE :> es, FileSystem :> es, Error SymlinkError :> es)
   => Eff (Symlink : es) a
   -> Eff es a
 runSymlinkIO = interpret $ \_ -> \case
@@ -74,8 +77,11 @@ runSymlinkIO = interpret $ \_ -> \case
     sourcePath <- FileSystem.makeAbsolute sourceFilePath
     destinationPath <- liftIO $ OsPath.decodeFS destination
     case sourceType of
-      File ->
-        createFileLink sourcePath destinationPath
+      File -> do
+        destinationExists <- FileSystem.doesFileExist destinationPath
+        if destinationExists
+          then Error.throwError (AlreadyExists destination)
+          else createFileLink sourcePath destinationPath
       Directory ->
         createDirectoryLink sourcePath destinationPath
   DeleteSymlink linkOsPath -> do
