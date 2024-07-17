@@ -16,10 +16,10 @@ import Confer.CLI.Errors
 import Confer.Effect.Symlink
 
 type TestEff =
-  Eff [FileSystem, Error CLIError, IOE]
+  Eff [FileSystem, Error SymlinkError, IOE]
 
 runTestEff
-  :: Eff [FileSystem, Error CLIError, IOE] a
+  :: Eff [FileSystem, Error SymlinkError, IOE] a
   -> IO a
 runTestEff action = do
   result <-

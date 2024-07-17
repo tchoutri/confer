@@ -34,59 +34,57 @@ spec =
     ]
 
 testExistingSymlink :: TestEff ()
-testExistingSymlink =
+testExistingSymlink = do
   Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
+      Symlink.runSymlinkIO $ do
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
         Symlink.createSymlink osDestinationPath osLinkPath
         Symlink.testSymlink osLinkPath osDestinationPath
-      case result of
-        Left e -> Error.throwError (SymlinkErrors $ NE.singleton e)
-        Right _a -> pure ()
+        pure ()
 
 testNonExistingSymlink :: TestEff ()
-testNonExistingSymlink =
-  Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
+testNonExistingSymlink = do
+  result <- Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
+      Symlink.runSymlinkIO $ do
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
         Symlink.testSymlink osLinkPath osDestinationPath
-      case result of
-        Left _ -> pure ()
-        Right _ -> assertFailure "This should fail"
+  case result of
+    Left _ -> pure ()
+    Right _ -> assertFailure "This should fail"
 
 testSymlinkToNonExistingTarget :: TestEff ()
-testSymlinkToNonExistingTarget =
-  Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
+testSymlinkToNonExistingTarget = do
+  result <- Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
+      Symlink.runSymlinkIO $ do
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath <> "-wrong"
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
         Symlink.testSymlink osLinkPath osDestinationPath
-      assertDoesNotExist result
+  assertDoesNotExist result
 
 testSymlinkToWrongTarget :: TestEff ()
-testSymlinkToWrongTarget =
-  Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
+testSymlinkToWrongTarget = do
+  result <- Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ ->
     Temporary.withSystemTempDirectory "links.ext" $ \directory -> do
-      result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
+      Symlink.runSymlinkIO $ do
         osDestinationPath <- liftIO $ OsPath.encodeFS filepath
         let linkPath = directory <> "/" <> FilePath.takeFileName filepath <> "-wrong"
         osLinkPath <- liftIO $ OsPath.encodeFS linkPath
         Symlink.createSymlink osDestinationPath osLinkPath
         Symlink.testSymlink osLinkPath (osDestinationPath <> [osp| -lol |])
-      assertWrongTarget result
+  assertWrongTarget result
 
 testNonSymlink :: TestEff ()
-testNonSymlink =
-  Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ -> do
-    result <- Error.runErrorNoCallStack . Symlink.runSymlinkIO $ do
+testNonSymlink = do
+  result <- Temporary.withSystemTempFile "confer-test.ext" $ \filepath _ -> do
+    Symlink.runSymlinkIO $ do
       osFilepath <- liftIO $ OsPath.encodeFS filepath
       Symlink.testSymlink osFilepath [osp| lol |]
-    assertIsNotSymlink result
+  assertIsNotSymlink result
