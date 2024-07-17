@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Confer.Config.Evaluator
   ( loadConfiguration
   , adjustConfiguration
@@ -32,6 +33,7 @@ import System.OsPath.Encoding qualified as OsPath
 import Confer.API.Host qualified as API
 import Confer.API.User qualified as API
 import Confer.Config.Types
+import Data.FileEmbed (embedFile)
 
 adjustConfiguration
   :: Text
@@ -60,12 +62,12 @@ loadConfiguration verbose pathToConfigFile = do
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
-    conferLuaFilePath <- liftIO $ getDataFileName "runtime/lua/confer.lua"
-    when verbose $
-      liftIO $
-        Text.putStrLn $
-          "Loading " <> Text.pack conferLuaFilePath
-    Lua.dofile (Just conferLuaFilePath)
+    let conferLua = $(embedFile "runtime/lua/confer.lua")
+    -- when verbose $
+    --   liftIO $
+    --     Text.putStrLn $
+    --       "Loading " <> Text.pack conferLuaFilePath
+    Lua.dostring conferLua
     Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule

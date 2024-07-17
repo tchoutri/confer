@@ -94,6 +94,7 @@ library
     , text-display
     , validation-selective
     , vector
+    , file-embed
 
   if flag(development)
     build-depends: placeholder
