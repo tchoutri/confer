@@ -81,6 +81,7 @@ library
     , effectful
     , effectful-core
     , extra
+    , file-embed
     , filepath
     , hostname
     , hslua-aeson
