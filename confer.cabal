@@ -81,6 +81,7 @@ library
     , effectful
     , effectful-core
     , extra
+    , file-embed
     , filepath
     , hostname
     , hslua-aeson
@@ -94,7 +95,6 @@ library
     , text-display
     , validation-selective
     , vector
-    , file-embed
 
   if flag(development)
     build-depends: placeholder
