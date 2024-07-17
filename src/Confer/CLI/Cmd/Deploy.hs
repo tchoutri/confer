@@ -35,8 +35,12 @@ deploy verbose deployments = do
     forM_ d.facts $ \fact -> do
       filepath <- liftIO $ OsPath.decodeFS fact.destination
       destinationPathExists <- FileSystem.doesPathExist filepath
-      unless destinationPathExists $ do
-        liftIO $
-          Text.putStrLn $
-            "[🔗] " <> display fact
-        createSymlink fact.source fact.destination
+      if destinationPathExists
+        then do
+          liftIO $
+            Text.putStrLn $
+              "[🔗] " <> display fact
+          createSymlink fact.source fact.destination
+        else when verbose $ do
+          destination <- liftIO $ OsPath.decodeFS fact.destination
+          liftIO $ Text.putStrLn $ display destination <> "already exists "

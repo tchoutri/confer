@@ -34,11 +34,12 @@ cliErrorToCode = \case
   NoDefaultConfigurationFile -> ErrorCode 156
   NoUserProvidedConfigurationFile{} -> ErrorCode 169
   NoDeploymentsAvailable{} -> ErrorCode 123
-  SymlinkErrors{} -> ErrorCode 192
+  SymlinkErrors{} -> ErrorCode 000
 
 symlinkErrorToCode :: SymlinkError -> ErrorCode
 symlinkErrorToCode = \case
   DoesNotExist{} -> ErrorCode 234
+  AlreadyExists{} -> ErrorCode 205
   IsNotSymlink{} -> ErrorCode 142
   WrongTarget{} -> ErrorCode 102
 
@@ -72,10 +73,17 @@ formatSymlinkError e@(DoesNotExist path) =
     <> " does not exist"
 formatSymlinkError e@(IsNotSymlink path) =
   display (symlinkErrorToCode e)
+    <> " "
     <> display (Text.pack . show $ path)
     <> " is not a symbolic link"
+formatSymlinkError e@(AlreadyExists path) =
+  display (symlinkErrorToCode e)
+    <> " "
+    <> display (Text.pack . show $ path)
+    <> " already exists"
 formatSymlinkError e@(WrongTarget linkPath expectedTarget actualTarget) =
   display (symlinkErrorToCode e)
+    <> " "
     <> display (Text.pack . show $ linkPath)
     <> " points to "
     <> display (Text.pack . show $ actualTarget)

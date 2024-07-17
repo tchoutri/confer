@@ -1,12 +1,14 @@
 module Main where
 
 import Data.Function ((&))
+import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Version (showVersion)
 import Effectful
 import Effectful.Error.Static
+import Effectful.Error.Static qualified as Error
 import Effectful.FileSystem
 import Options.Applicative
 import Options.Applicative.Types
@@ -101,9 +103,14 @@ runOptions (Options dryRun verbose configurationFile mArch mOs mHostname Check) 
     then
       Cmd.check verbose deployments
         & runSymlinkPure Map.empty
-    else
-      Cmd.check verbose deployments
-        & runSymlinkIO
+    else do
+      result <-
+        Cmd.check verbose deployments
+          & runSymlinkIO
+          & runErrorNoCallStack
+      case result of
+        Left symlinkError -> Error.throwError (SymlinkErrors (NE.singleton symlinkError))
+        Right a -> pure a
 runOptions (Options dryRun verbose configurationFile mArch mOs mHostname Deploy) = do
   deploymentArch <- determineDeploymentArch verbose mArch
   deploymentOS <- determineDeploymentOS verbose mOs
@@ -112,9 +119,14 @@ runOptions (Options dryRun verbose configurationFile mArch mOs mHostname Deploy)
     then
       Cmd.deploy verbose deployments
         & runSymlinkPure Map.empty
-    else
-      Cmd.deploy verbose deployments
-        & runSymlinkIO
+    else do
+      result <-
+        Cmd.deploy verbose deployments
+          & runSymlinkIO
+          & runErrorNoCallStack
+      case result of
+        Left symlinkError -> Error.throwError (SymlinkErrors (NE.singleton symlinkError))
+        Right a -> pure a
 
 withInfo :: Parser a -> String -> ParserInfo a
 withInfo opts desc =
