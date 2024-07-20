@@ -4,11 +4,8 @@ active-repositories: hackage.haskell.org
 
 with-compiler: ghc-9.8
 
-package *
-  haddock-location: haddock-9.8
-
-program-locations
-  haddock-location: haddock-9.8
+-- program-locations
+--   haddock-location: haddock-9.8
 
 test-show-details: direct
 

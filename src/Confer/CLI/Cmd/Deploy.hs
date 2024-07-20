@@ -43,4 +43,4 @@ deploy verbose deployments = do
           createSymlink fact.source fact.destination
         else when verbose $ do
           destination <- liftIO $ OsPath.decodeFS fact.destination
-          liftIO $ Text.putStrLn $ display destination <> "already exists "
+          liftIO $ Text.putStrLn $ display destination <> " already exists."
