@@ -73,27 +73,29 @@ runSymlinkIO = interpret $ \_ -> \case
     sourceType <- liftIO $ do
       metadata <- Directory.getFileMetadata source
       pure $ Directory.fileTypeFromMetadata metadata
-    sourceFilePath <- liftIO $ OsPath.decodeFS source
-    sourcePath <- FileSystem.makeAbsolute sourceFilePath
+    sourcePath <- FileSystem.makeAbsolute =<< liftIO (OsPath.decodeFS source)
     destinationPath <- liftIO $ OsPath.decodeFS destination
     case sourceType of
       File -> do
         destinationExists <- FileSystem.doesFileExist destinationPath
         if destinationExists
-          then Error.throwError (AlreadyExists destination)
+          then handleAlreadyExistingDestination sourcePath destinationPath
           else createFileLink sourcePath destinationPath
-      Directory ->
-        createDirectoryLink sourcePath destinationPath
+      Directory -> do
+        destinationExists <- FileSystem.doesDirectoryExist destinationPath
+        if destinationExists
+          then handleAlreadyExistingDestination sourcePath destinationPath
+          else createDirectoryLink sourcePath destinationPath
   DeleteSymlink linkOsPath -> do
     linkFilePath <- liftIO $ OsPath.decodeFS linkOsPath
     sourceType <- liftIO $ do
       metadata <- Directory.getFileMetadata linkOsPath
       pure $ Directory.fileTypeFromMetadata metadata
     case sourceType of
-      File ->
-        FileSystem.removeFile linkFilePath
       Directory ->
         FileSystem.removeDirectory linkFilePath
+      _ ->
+        FileSystem.removeFile linkFilePath
   TestSymlink linkOsPath expectedLinkTarget -> do
     linkFilepath <- liftIO $ OsPath.decodeFS linkOsPath
     liftIO $
@@ -145,3 +147,30 @@ runSymlinkPure virtualFS = reinterpret (State.evalState virtualFS) $ \_ -> \case
                     actualLinkTarget
                 )
       Nothing -> pure $ Left (DoesNotExist linkPath)
+
+handleAlreadyExistingDestination
+  :: (Error SymlinkError :> es, IOE :> es)
+  => FilePath
+  -> FilePath
+  -> Eff es ()
+handleAlreadyExistingDestination sourcePath destinationPath = do
+  source <- liftIO $ OsPath.encodeFS sourcePath
+  destination <- liftIO $ OsPath.encodeFS destinationPath
+  destinationType <- liftIO $ do
+    metadata <- Directory.getFileMetadata destination
+    pure $ Directory.fileTypeFromMetadata metadata
+  destinationIsSymbolic <- liftIO $ Directory.pathIsSymbolicLink destinationPath
+  if destinationIsSymbolic
+    then do
+      destinationTruePath <-
+        liftIO $
+          Directory.readSymbolicLink destination
+      if destinationTruePath == source
+        then do
+          liftIO $
+            putStrLn $
+              destinationPath <> " already points to " <> sourcePath <> "."
+        else Error.throwError (AlreadyExists destination)
+    else do
+      liftIO $ putStrLn $ destinationPath <> " is not a symbolic link but a " <> show destinationType
+      Error.throwError (AlreadyExists destination)

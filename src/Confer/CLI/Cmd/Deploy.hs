@@ -37,10 +37,11 @@ deploy verbose deployments = do
       destinationPathExists <- FileSystem.doesPathExist filepath
       if destinationPathExists
         then do
-          liftIO $
-            Text.putStrLn $
-              "[🔗] " <> display fact
-          createSymlink fact.source fact.destination
-        else when verbose $ do
           destination <- liftIO $ OsPath.decodeFS fact.destination
           liftIO $ Text.putStrLn $ display destination <> " already exists."
+        else do
+          createSymlink fact.source fact.destination
+          when verbose $ do
+            liftIO $
+              Text.putStrLn $
+                "[🔗] " <> display fact
