@@ -15,12 +15,12 @@ jobs:
     steps:
       - name: Extract the tested GHC versions
         id: set-matrix
-        uses: kleidukos/get-tested@v0.1.7.0
+        uses: kleidukos/get-tested@v0.1.7.1
         with:
           cabal-file: confer.cabal
           ubuntu-version: 'latest'
           macos-version: 'latest'
-          version: 0.1.7.0
+          version: 0.1.7.1
   tests:
     name: ${{ matrix.ghc }} on ${{ matrix.os }}
     needs: generate-matrix
@@ -179,5 +179,5 @@ jobs:
         title: confer-head
         files: |
           confer-head-Linux-x86_64.tar.gz
-          # confer-head-Linux-static-x86_64.tar.gz
+          confer-head-Linux-static-x86_64.tar.gz
           confer-head-macOS-arm64.tar.gz
