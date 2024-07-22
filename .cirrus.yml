@@ -1,0 +1,7 @@
+task:
+  name: FreeBSD
+  freebsd_instance:
+    image_family: freebsd-14-0
+  install_script: pkg install -y ghc hs-cabal-install git autoconf bash
+  script:
+    - ./.cirrus/ci.sh build_freebd
