@@ -76,7 +76,7 @@ library
   autogen-modules: Paths_confer
   build-depends:
     , aeson
-    , base
+    , base ==4.19.1.0
     , containers
     , directory
     , effectful
