@@ -80,7 +80,7 @@ library
     , containers
     , directory
     , effectful
-    , effectful-core
+    , effectful-core ^>=2.3
     , extra
     , file-embed
     , filepath
