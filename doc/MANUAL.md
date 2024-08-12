@@ -62,9 +62,11 @@ Override the host name detected in the configuration file.
 
 The configuration is written in a Lua file with facts and deployement rules.
 
-To express a symbolic link of your `.gitconfig` file within your home directory, write:
+For instance, to express a symbolic link of your `.gitconfig` file from the directory where your file are versioned to your home directory, write:
 
 ```lua
+local user = require("user")
+
 local git_deployment = confer.fact({
   -- The name of this fact.
   name = "git",
@@ -85,7 +87,13 @@ local laptop = confer.deploy({
     git_deployment,
     },
 })
+```
+And next we return a table with the configured deployments:
 
+```lua
+return {
+  laptop
+}
 ```
 
 ### EXAMPLES

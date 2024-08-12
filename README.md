@@ -1,6 +1,8 @@
 # Confer [![Made with Haskell](https://img.shields.io/badge/Made%20in-Haskell-%235e5086?logo=haskell&style=flat-square)](https://haskell.org)  [![Configured in Lua](https://img.shields.io/badge/Configured%20in-Lua-%2300007f?logo=lua&style=flat-square)](https://www.lua.org/)
 
-> The dotfiles manager
+Confer is a symbolic link manager that handles the deployment and synchronisation of your configuration files.
+
+Write a configuration file to declare where your files are supposed to go, and `confer` will create the appropriate links.
 
 ## 📖 Documentation
 Read the [Manual](./doc/MANUAL.md) for documentation.
@@ -9,6 +11,7 @@ For more details about the inner workings, read the [Architecture document](./do
 
 ## 📦 Install
 
+### Nightly pre-releases
 Pre-release binaries are available for the following platforms:
 
 * [Linux-x86_64-musl (statically linked)](https://github.com/tchoutri/confer/releases/download/confer-head/confer-head-Linux-static-x86_64.tar.gz)
