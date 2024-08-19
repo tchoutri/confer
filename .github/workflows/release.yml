@@ -1,12 +1,13 @@
-name: CI
+name: Release Pipeline
 
-# Trigger the workflow on push or pull request, but only for the main branch
 on:
-  pull_request:
   push:
     branches: ['main']
+    tags:
+      - "v*"
 
 jobs:
+
   generate-matrix:
     name: 'Generate matrix from cabal'
     outputs:
@@ -21,6 +22,7 @@ jobs:
           ubuntu-version: 'latest'
           macos-version: 'latest'
           version: 0.1.7.1
+
   tests:
     name: ${{ matrix.ghc }} on ${{ matrix.os }}
     needs: generate-matrix
@@ -57,35 +59,30 @@ jobs:
       - name: Build
         run: cabal build --project-file=cabal.release.project
 
-      - name: Test
-        run: cabal test --project-file=cabal.release.project --test-options "--xml=dist-newstyle/report.xml" all
-
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: 'dist-newstyle/report.xml'
-
       - name: Install
-        run: cabal install --project-file=cabal.release.project --installdir=distribution --install-method=copy
+        run: |
+          bin=$(cabal -v0 --project-file=cabal.static.project list-bin confer)
+          mkdir distribution
+          cp ${bin} distribution/confer
 
       - name: File type
         run: file distribution/confer
 
-      - name: Package the confer-head executable
+      - name: Package the confer executable
         run: |
-          CONFER_EXEC=distribution/confer
+          PRINTAPI_EXEC=distribution/confer
           .github/workflows/process-binaries.sh
-          DIR=$(dirname $CONFER_EXEC)
-          FILE=$(basename $CONFER_EXEC)
-          CONFER_EXEC_TAR=confer-head-${{ runner.os }}-${{ env.ARCH }}.tar.gz
-          tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
-          echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
-      - name: Upload the confer-head executable
-        uses: actions/upload-artifact@v4
+          DIR=$(dirname $PRINTAPI_EXEC)
+          FILE=$(basename $PRINTAPI_EXEC)
+          version=$(./distribution/confer --version)
+          PRINTAPI_EXEC_TAR=confer-${version}-${{ runner.os }}-${{ matrix.ghc }}-${{ env.ARCH }}.tar.gz
+          tar -czvf $PRINTAPI_EXEC_TAR -C $DIR $FILE
+          echo PRINTAPI_EXEC_TAR=$PRINTAPI_EXEC_TAR >> $GITHUB_ENV
+      - name: Upload the confer executable
+        uses: actions/upload-artifact@v3
         with:
-          name: confer-${{ runner.os }}-${{ env.ARCH }}
-          path: ${{ env.CONFER_EXEC_TAR }}
+          name: artifact
+          path: ${{ env.PRINTAPI_EXEC_TAR }}
 
   build-alpine:
     name: 9.8.2 on alpine-3.19
@@ -152,15 +149,15 @@ jobs:
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
 
       - name: Upload confer executable to workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: confer-${{ runner.os }}-static-x86_64
           path: ${{ env.CONFER_EXEC_TAR }}
 
-  prerelease-head:
-    name: Create a GitHub prerelease with the binary artifacts
+  release:
+    name: Create a GitHub release with the binary artifacts
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: ['tests', 'build-alpine']
 
     steps:
@@ -169,7 +166,7 @@ jobs:
         name: artifact
         path: ./out
 
-    - name: Create a GitHub Pre-release
+    - name: Create a GitHub Release
       uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
