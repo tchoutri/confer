@@ -146,4 +146,5 @@ test-suite confer-test
     , tasty
     , tasty-coverage
     , tasty-hunit
+    , tasty-test-reporter
     , temporary
