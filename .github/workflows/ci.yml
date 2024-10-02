@@ -166,15 +166,8 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
       with:
-        name: confer-Linux-x86_64
-
-    - uses: actions/download-artifact@v4
-      with:
-        name: confer-Linux-static-x86_64
-
-    - uses: actions/download-artifact@v4
-      with:
-        name: confer-macOS-arm64
+        pattern: confer-*
+        merge-multiple: true
 
     - name: Create GitHub prerelease
       uses: marvinpinto/action-automatic-releases@v1.2.1
@@ -187,3 +180,11 @@ jobs:
           confer-head-Linux-x86_64.tar.gz
           confer-head-Linux-static-x86_64.tar.gz
           confer-head-macOS-arm64.tar.gz
+
+    - name: Pre-release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        prerelease: true
+        files: ./out/*
+        tag_name: print-api-head
