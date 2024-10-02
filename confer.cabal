@@ -44,6 +44,7 @@ common extensions
   default-language:   GHC2021
 
 common ghc-options
+  ghc-prof-options: -fprof-auto -fno-prof-count-entries -fprof-auto-calls
   ghc-options:
     -Wall -Wcompat -Widentities -Wincomplete-record-updates
     -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
