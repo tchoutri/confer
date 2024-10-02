@@ -4,9 +4,6 @@ active-repositories: hackage.haskell.org
 
 with-compiler: ghc-9.8
 
--- program-locations
---   haddock-location: haddock-9.8
-
 allow-newer: mtl, ansi-terminal, text, tasty
 
 test-show-details: direct
@@ -15,11 +12,9 @@ documentation: True
 
 tests: True
 
--- semaphore: True
+semaphore: True
 
--- multi-repl: True
-
-jobs: $ncpus
+multi-repl: True
 
 package *
   ghc-options: +RTS -A32m -RTS -haddock
