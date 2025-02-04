@@ -10,8 +10,9 @@ module Confer.Config.Types
 import Data.Maybe
 import Data.Text (Text)
 import Data.Text.Display
-import Data.Text.Internal.Builder qualified as Builder
+import Data.Text.Builder.Linear qualified as Builder
 import Data.Vector (Vector)
+import Data.String
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 
@@ -28,9 +29,9 @@ instance Display Fact where
   displayBuilder Fact{name, source, destination} =
     Builder.fromText name
       <> ": "
-      <> Builder.fromString (fromJust (OsPath.decodeUtf source))
+      <> fromString (fromJust (OsPath.decodeUtf source))
       <> " ~> "
-      <> Builder.fromString (fromJust (OsPath.decodeUtf destination))
+      <> fromString (fromJust (OsPath.decodeUtf destination))
 
 data Deployment = Deployment
   { hostname :: Maybe Text

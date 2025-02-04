@@ -16,7 +16,7 @@ extra-doc-files:
   CHANGELOG.md
   doc/*.md
   README.md
-  doc/confer_example.lua
+  examples/confer.lua
 
 data-files:      runtime/lua/confer.lua
 tested-with:     GHC ==9.10.1
@@ -94,6 +94,7 @@ library
     , selective
     , text
     , text-display
+    , text-builder-linear
     , validation-selective
     , vector
 
@@ -142,4 +143,5 @@ test-suite confer-test
     , tasty-coverage
     , tasty-hunit
     , tasty-test-reporter
+    , vector
     , temporary
