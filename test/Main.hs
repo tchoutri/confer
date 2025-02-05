@@ -7,6 +7,7 @@ import Test.Tasty.HUnit
 import Test.Tasty.Runners.Reporter qualified as Reporter
 
 import Confer.CLI.Cmd.CheckTest qualified as CheckTest
+import Confer.EvaluatorTest qualified as EvaluatorTest
 import Utils (TestEff)
 import Utils qualified
 
@@ -23,4 +24,5 @@ main = do
 specs :: List (TestEff TestTree)
 specs =
   [ CheckTest.spec
+  , EvaluatorTest.spec
   ]

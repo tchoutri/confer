@@ -2,7 +2,7 @@ packages: ./
 
 active-repositories: hackage.haskell.org
 
-with-compiler: ghc-9.8
+with-compiler: ghc-9.10
 
 allow-newer: mtl, ansi-terminal, text, tasty
 
@@ -24,10 +24,5 @@ allow-newer:
 
 source-repository-package
   type: git
-  location: https://github.com/ekmett/placeholder
-  tag: c958c36
-
-source-repository-package
-  type: git
   location: https://github.com/goodlyrottenapple/tasty-test-reporter 
-  tag: b704130
+  tag: b704130545aa3925a8487bd3e92f1dd5ce0512e2

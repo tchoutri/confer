@@ -49,7 +49,7 @@ assertIsNotSymlink (Right _) = assertFailure "Did not return Left"
 assertIsNotSymlink (Left (IsNotSymlink{})) = pure ()
 assertIsNotSymlink (Left e) = assertFailure $ "Returned: " <> show e
 
-assertRight :: HasCallStack => Either a () -> TestEff ()
+assertRight :: HasCallStack => Either a b -> TestEff b
 assertRight (Left _a) = liftIO $ Test.assertFailure "Test return Left instead of Right"
 assertRight (Right b) = pure b
 
@@ -67,3 +67,6 @@ testThese groupName tests = fmap (Test.testGroup groupName) newTests
 
 assertBool :: Bool -> TestEff ()
 assertBool boolean = liftIO $ Test.assertBool "" boolean
+
+assertEqual :: (Eq a, Show a) => a -> a -> TestEff ()
+assertEqual actual expected = liftIO $ Test.assertEqual "" actual expected

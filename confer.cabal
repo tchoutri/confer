@@ -15,11 +15,11 @@ build-type:      Simple
 extra-doc-files:
   CHANGELOG.md
   doc/*.md
+  examples/confer.lua
   README.md
-  doc/confer_example.lua
 
 data-files:      runtime/lua/confer.lua
-tested-with:     GHC ==9.8.2
+tested-with:     GHC ==9.10.1
 
 flag development
   description: Compile the project for development
@@ -91,15 +91,12 @@ library
     , hslua-marshalling
     , hslua-module-system
     , hslua-packaging
-    , placeholder
     , selective
     , text
+    , text-builder-linear
     , text-display
     , validation-selective
     , vector
-
-  if flag(development)
-    build-depends: placeholder
 
   hs-source-dirs:  src
 
@@ -120,9 +117,6 @@ executable confer
     , filepath
     , optparse-applicative
     , text
-
-  if flag(development)
-    build-depends: placeholder
 
 test-suite confer-test
   import:         extensions
@@ -150,3 +144,4 @@ test-suite confer-test
     , tasty-hunit
     , tasty-test-reporter
     , temporary
+    , vector
