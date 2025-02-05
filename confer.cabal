@@ -15,8 +15,8 @@ build-type:      Simple
 extra-doc-files:
   CHANGELOG.md
   doc/*.md
-  README.md
   examples/confer.lua
+  README.md
 
 data-files:      runtime/lua/confer.lua
 tested-with:     GHC ==9.10.1
@@ -93,8 +93,8 @@ library
     , hslua-packaging
     , selective
     , text
-    , text-display
     , text-builder-linear
+    , text-display
     , validation-selective
     , vector
 
@@ -143,5 +143,5 @@ test-suite confer-test
     , tasty-coverage
     , tasty-hunit
     , tasty-test-reporter
-    , vector
     , temporary
+    , vector

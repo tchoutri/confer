@@ -1,21 +1,19 @@
-{-# LANGUAGE QuasiQuotes #-}
 module Confer.EvaluatorTest where
 
-import Data.Function
 import Control.Monad
-import Data.Vector qualified as Vector
+import Data.Function
 import Data.List.NonEmpty qualified as NE
+import Data.Vector qualified as Vector
 import Effectful
 import Effectful.Error.Static (Error)
 import Effectful.Error.Static qualified as Error
-import Effectful.FileSystem (FileSystem)
+import Effectful.FileSystem
 import Effectful.FileSystem qualified as FileSystem
 import System.FilePath qualified as FilePath
 import System.IO.Temp qualified as Temporary
 import System.OsPath
 import System.OsPath qualified as OsPath
 import Test.Tasty (TestTree)
-import Effectful.FileSystem
 import Test.Tasty.HUnit ()
 
 import Confer.Config.Evaluator

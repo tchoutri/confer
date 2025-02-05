@@ -8,11 +8,11 @@ module Confer.Config.Types
   ) where
 
 import Data.Maybe
-import Data.Text (Text)
-import Data.Text.Display
-import Data.Text.Builder.Linear qualified as Builder
-import Data.Vector (Vector)
 import Data.String
+import Data.Text (Text)
+import Data.Text.Builder.Linear qualified as Builder
+import Data.Text.Display
+import Data.Vector (Vector)
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 
