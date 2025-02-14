@@ -20,7 +20,9 @@ package *
   ghc-options: +RTS -A32m -RTS -haddock
 
 allow-newer:
-  hslua-aeson:unordered-containers
+  hslua-aeson:unordered-containers,
+  tasty-test-reporter:containers,
+  tasty-test-reporter:filepath,
 
 source-repository-package
   type: git
