@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module Main where
 
 import Data.Function ((&))
@@ -11,6 +13,7 @@ import Effectful.Error.Static
 import Effectful.Error.Static qualified as Error
 import Effectful.FileSystem
 import Options.Applicative
+import Options.Applicative.Help.Pretty
 import Options.Applicative.Types
 import Paths_confer (version)
 import System.IO
@@ -44,7 +47,12 @@ data Command
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
-  parseResult <- execParser (parseOptions `withInfo` "confer – The dotfiles manager")
+  let opts = 
+        info (parseOptions <**> (simpleVersioner (showVersion version)) <**> helper) $
+            (header "confer – The dotfiles manager")
+            <> (progDescDoc (Just programDescription))
+            <> (footerDoc (Just programFooter))
+  parseResult <- execParser opts
   result <-
     runOptions parseResult
       & runFileSystem
@@ -53,6 +61,14 @@ main = do
   case result of
     Right _ -> pure ()
     Left e -> reportError e
+
+programDescription :: Doc
+programDescription = "Confer handles the deployment and synchronisation of your configuration files."
+
+programFooter :: Doc
+programFooter = vsep [
+  "Git repository: https://github.com/tchoutri/confer"
+  ]
 
 parseOptions :: Parser Options
 parseOptions =
