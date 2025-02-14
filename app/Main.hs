@@ -47,9 +47,9 @@ data Command
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
-  let opts = 
+  let opts =
         info (parseOptions <**> (simpleVersioner (showVersion version)) <**> helper) $
-            (header "confer – The dotfiles manager")
+          (header "confer – The dotfiles manager")
             <> (progDescDoc (Just programDescription))
             <> (footerDoc (Just programFooter))
   parseResult <- execParser opts
@@ -66,9 +66,10 @@ programDescription :: Doc
 programDescription = "Confer handles the deployment and synchronisation of your configuration files."
 
 programFooter :: Doc
-programFooter = vsep [
-  "Git repository: https://github.com/tchoutri/confer"
-  ]
+programFooter =
+  vsep
+    [ "Git repository: https://github.com/tchoutri/confer"
+    ]
 
 parseOptions :: Parser Options
 parseOptions =
