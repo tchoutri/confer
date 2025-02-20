@@ -1,4 +1,4 @@
-# Confer [![Made with Haskell](https://img.shields.io/badge/Made%20in-Haskell-%235e5086?logo=haskell&style=flat-square)](https://haskell.org)  [![Configured in Lua](https://img.shields.io/badge/Configured%20in-Lua-%2300007f?logo=lua&style=flat-square)](https://www.lua.org/)
+# Confer [![Made with Haskell](https://img.shields.io/badge/Made%20in-Haskell-%235e5086?logo=haskell&style=flat-square)](https://haskell.org)  [![Configured in Lua](https://img.shields.io/badge/Configured%20in-Lua-%2300007f?logo=lua&style=flat-square)](https://www.lua.org/) ![Free Palestine](https://img.shields.io/badge/%F0%9F%94%BB-Anti_Genocide_Action-blue?style=flat&logoColor=black&labelColor=green&color=black)
 
 Confer is a symbolic link manager that handles the deployment and synchronisation of your configuration files.
 

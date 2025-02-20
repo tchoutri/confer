@@ -1,4 +1,4 @@
-{-# LANGUAGE QuasiQuotes #-}
+
 
 module Main where
 
@@ -48,10 +48,10 @@ main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
   let opts =
-        info (parseOptions <**> (simpleVersioner (showVersion version)) <**> helper) $
-          (header "confer – The dotfiles manager")
-            <> (progDescDoc (Just programDescription))
-            <> (footerDoc (Just programFooter))
+        info (parseOptions <**> simpleVersioner (showVersion version) <**> helper) $
+          header "confer – The dotfiles manager"
+            <> progDescDoc (Just programDescription)
+            <> footerDoc (Just programFooter)
   parseResult <- execParser opts
   result <-
     runOptions parseResult
