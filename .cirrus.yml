@@ -3,5 +3,16 @@ task:
   freebsd_instance:
     image_family: freebsd-14-0
   install_script: pkg install -y ghc hs-cabal-install git autoconf bash
+  setup_script:
+    - export PATH=$HOME/.local/ghcup/bin:/opt/ghcup/bin:$PATH
+    - ./.cirrus/ci.sh setup_freebsd
+    - ./.cirrus/ci.sh configure_freebsd
+  haskell_cache:
+    folder: ~/.cabal/store
+    fingerprint_script:
+      - export PLAN_HASH=$(sha256sum ./dist-newstyle/cache/plan.json | awk '{print $1}')
+      - echo "ghc-9.8.2-$PLAN_HASH"
+
   script:
-    - ./.cirrus/ci.sh build_freebd
+    - ./.cirrus/ci.sh build_freebsd
+    - ./.cirrus/ci.sh test_freebsd
