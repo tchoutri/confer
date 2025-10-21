@@ -13,11 +13,11 @@ repl: ## Start a REPL
 test: ## Run the test suite
 	@cabal test
 
-lint: ## Run the code linter (HLint)
+lint: ## Run the code linter
 	@find app test src -name "*.hs" | xargs -P $(PROCS) -I {} hlint --refactor-options="-i" --refactor {}
 
-style: ## Run the code styler (fourmolu and cabal-fmt)
-	@cabal-fmt -i *.cabal
+style: ## Run the code stylers
+	@cabal-gild --mode=format --io=confer.cabal
 	@fourmolu -q --mode inplace test src app
 
 tags: ## Generate ctags for the project with `ghc-tags`

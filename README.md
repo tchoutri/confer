@@ -21,5 +21,5 @@ Pre-release binaries are available for the following platforms:
 ## 🔧 Build
 
 *Confer* is made in Haskell. To build it from source, use [ghcup](https://www.haskell.org/ghcup/) to install the following toolchains:
-* `cabal` 3.10
-* `ghc` 9.8.2
+* `cabal` 3.14
+* `ghc` 9.10.3

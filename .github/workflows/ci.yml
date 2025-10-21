@@ -48,7 +48,7 @@ jobs:
       - name: Freeze
         run: cabal freeze --project-file=cabal.release.project
       - name: Cache
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v4
         with:
           path: ${{ steps.setup-haskell.outputs.cabal-store }}
           key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-${{ hashFiles('**/plan.json') }}
@@ -58,13 +58,7 @@ jobs:
         run: cabal build --project-file=cabal.release.project
 
       - name: Test
-        run: cabal test --project-file=cabal.release.project --test-options "--xml=dist-newstyle/report.xml" all
-
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: 'dist-newstyle/report.xml'
+        run: cabal test --project-file=cabal.release.project all
 
       - name: Install
         run: cabal install --project-file=cabal.release.project --installdir=distribution --install-method=copy
@@ -81,6 +75,7 @@ jobs:
           CONFER_EXEC_TAR=confer-head-${{ runner.os }}-${{ env.ARCH }}.tar.gz
           tar -czvf $CONFER_EXEC_TAR -C $DIR $FILE
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
+
       - name: Upload the confer-head executable
         uses: actions/upload-artifact@v4
         with:
@@ -88,7 +83,7 @@ jobs:
           path: ${{ env.CONFER_EXEC_TAR }}
 
   build-alpine:
-    name: 9.10.1 on alpine-3.19
+    name: 9.10.3 on alpine-3.19
     runs-on: ubuntu-latest
     container: 'alpine:3.19'
     needs: generate-matrix
@@ -107,7 +102,7 @@ jobs:
       - uses: haskell-actions/setup@v2
         id: setup-haskell
         with:
-          ghc-version: '9.10.1'
+          ghc-version: '9.10.3'
           cabal-version: 'latest'
 
       - name: Configure

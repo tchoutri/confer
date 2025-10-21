@@ -1,30 +1,25 @@
-cabal-version:   3.6
-name:            confer
-version:         0.1.0.0
-synopsis:        The dotfiles manager
+cabal-version: 3.6
+name: confer
+version: 0.1.0.0
+synopsis: The dotfiles manager
 description:
   Confer is a configuration file manager that symlinks your configuration files into their appropriate locations.
   You can put your configuration files in version control and make them easily available to their applications.
 
-license:         BSD-3-Clause
-license-file:    LICENSE
-author:          Théophile Choutri
-maintainer:      theophile@choutri.eu
-copyright:       2024 Théophile Choutri
-build-type:      Simple
+license: BSD-3-Clause
+license-file: LICENSE
+author: Théophile Choutri
+maintainer: theophile@choutri.eu
+copyright: 2024 Théophile Choutri de Tarlé
+build-type: Simple
 extra-doc-files:
   CHANGELOG.md
+  README.md
   doc/*.md
   examples/confer.lua
-  README.md
 
-data-files:      runtime/lua/confer.lua
-tested-with:     GHC ==9.10.1
-
-flag development
-  description: Compile the project for development
-  default:     True
-  manual:      False
+data-files: runtime/lua/confer.lua
+tested-with: ghc ==9.10.3
 
 common extensions
   default-extensions:
@@ -41,27 +36,49 @@ common extensions
     StrictData
     TypeFamilies
 
-  default-language:   GHC2021
+  default-language: GHC2021
 
 common ghc-options
-  ghc-prof-options: -fprof-auto -fno-prof-count-entries -fprof-auto-calls
-  ghc-options:
-    -Wall -Wcompat -Widentities -Wincomplete-record-updates
-    -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
-    -fhide-source-paths -Wno-unused-do-bind -fshow-hole-constraints
-    -Wno-unticked-promoted-constructors
+  ghc-prof-options:
+    -fprof-auto
+    -fno-prof-count-entries
+    -fprof-auto-calls
 
-  if flag(development)
-    ghc-options: -finfo-table-map -Wno-unused-imports -Wno-unused-packages
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wpartial-fields
+    -Wredundant-constraints
+    -fhide-source-paths
+    -Wno-unused-do-bind
+    -fshow-hole-constraints
+    -Wno-unticked-promoted-constructors
+    -finfo-table-map
+    -Wno-unused-imports
+    -Wno-unused-packages
+    -flate-specialise
+    -funbox-strict-fields
+    -finline-generics-aggressively
+    -fexpose-all-unfoldings
+    -Wwarn=extended-warnings
+    -fdicts-strict
+    -fmax-worker-args=16
+    -fspec-constr-recursive=16
+    -funbox-strict-fields
 
 common rts-options
-  ghc-options: -rtsopts -threaded "-with-rtsopts=-N -T"
+  ghc-options:
+    -rtsopts
+    -threaded
+    "-with-rtsopts=-N -T"
 
 library
-  import:          extensions
-  import:          ghc-options
-
-  -- cabal-fmt: expand src/
+  import: extensions
+  import: ghc-options
+  -- cabal-gild: discover src
   exposed-modules:
     Confer.API.Host
     Confer.API.User
@@ -73,58 +90,60 @@ library
     Confer.Config.Types
     Confer.Effect.Symlink
 
-  other-modules:   Paths_confer
+  other-modules: Paths_confer
   autogen-modules: Paths_confer
   build-depends:
-    , aeson
-    , base
-    , containers
-    , directory
-    , effectful
-    , effectful-core
-    , extra
-    , file-embed
-    , filepath
-    , hostname
-    , hslua-aeson
-    , hslua-core
-    , hslua-marshalling
-    , hslua-module-system
-    , hslua-packaging
-    , selective
-    , text
-    , text-builder-linear
-    , text-display
-    , validation-selective
-    , vector
+    aeson,
+    base,
+    containers,
+    directory,
+    effectful,
+    effectful-core,
+    extra,
+    file-embed,
+    filepath,
+    hostname,
+    hslua-aeson,
+    hslua-core,
+    hslua-marshalling,
+    hslua-module-system,
+    hslua-packaging,
+    layoutz,
+    selective,
+    text,
+    text-builder-linear,
+    text-display,
+    validation-selective,
+    vector,
 
-  hs-source-dirs:  src
+  hs-source-dirs: src
 
 executable confer
-  import:          extensions
-  import:          ghc-options
-  import:          rts-options
-  hs-source-dirs:  app
-  main-is:         Main.hs
-  other-modules:   Paths_confer
+  import: extensions
+  import: ghc-options
+  import: rts-options
+  hs-source-dirs: app
+  main-is: Main.hs
+  other-modules: Paths_confer
   autogen-modules: Paths_confer
   build-depends:
-    , base
-    , confer
-    , containers
-    , effectful
-    , effectful-core
-    , filepath
-    , optparse-applicative
-    , text
+    base,
+    confer,
+    containers,
+    effectful,
+    effectful-core,
+    filepath,
+    optparse-applicative,
+    text,
 
 test-suite confer-test
-  import:         extensions
-  import:         ghc-options
-  import:         rts-options
-  type:           exitcode-stdio-1.0
+  import: extensions
+  import: ghc-options
+  import: rts-options
+  type: exitcode-stdio-1.0
   hs-source-dirs: test
-  main-is:        Main.hs
+  main-is: Main.hs
+  -- cabal-gild: discover test --exclude "test/Main.hs"
   other-modules:
     Confer.CLI.Cmd.CheckTest
     Confer.EvaluatorTest
@@ -132,16 +151,15 @@ test-suite confer-test
 
   other-modules:
   build-depends:
-    , base
-    , confer
-    , containers
-    , directory
-    , effectful
-    , effectful-core
-    , filepath
-    , tasty
-    , tasty-coverage
-    , tasty-hunit
-    , tasty-test-reporter
-    , temporary
-    , vector
+    base,
+    confer,
+    containers,
+    directory,
+    effectful,
+    effectful-core,
+    filepath,
+    tasty,
+    tasty-coverage,
+    tasty-hunit,
+    temporary,
+    vector,

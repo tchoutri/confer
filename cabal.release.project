@@ -6,15 +6,6 @@ optimization: 2
 
 documentation: False
 
-flags: -development
-
 executable-stripping: True
 
 library-stripping: True
-
-package *
-  ghc-options:
-    -flate-specialise -funbox-strict-fields
-    -finline-generics-aggressively -fexpose-all-unfoldings
-    -Wwarn=extended-warnings -fdicts-strict -fmax-worker-args=16
-    -fspec-constr-recursive=16 -funbox-strict-fields

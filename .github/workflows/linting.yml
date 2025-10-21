@@ -11,8 +11,9 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
-    - uses: fourmolu/fourmolu-action@v11
+    - uses: haskell-actions/run-fourmolu@v11
       with:
+        version: "0.18.0.0"
         pattern: |
           app/**/*.hs
           src/**/*.hs
@@ -26,7 +27,7 @@ jobs:
     - name: 'Set up HLint'
       uses: haskell-actions/hlint-setup@v2
       with:
-        version: '3.8'
+        version: '3.10'
 
     - name: 'Run HLint'
       uses: haskell-actions/hlint-run@v2
