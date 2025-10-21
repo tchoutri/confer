@@ -7,9 +7,9 @@ build_freebsd() {
   mkdir -p ~/.local/ghcup/bin/
   curl -L https://downloads.haskell.org/~ghcup/x86_64-portbld-freebsd-ghcup --output /opt/ghcup/bin/ghcup
   chmod +x /opt/ghcup/bin/ghcup
-  ghcup install ghc 9.8.2
-  ghcup set ghc 9.8.2
-  ghcup install cabal 3.12.1.0
+  ghcup install ghc 9.10.3
+  ghcup set ghc 9.10.3
+  ghcup install cabal 3.14.2.0
 }
 
 help() {

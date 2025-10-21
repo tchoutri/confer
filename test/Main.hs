@@ -4,7 +4,6 @@ import GHC.List (List)
 import System.IO
 import Test.Tasty
 import Test.Tasty.HUnit
-import Test.Tasty.Runners.Reporter qualified as Reporter
 
 import Confer.CLI.Cmd.CheckTest qualified as CheckTest
 import Confer.EvaluatorTest qualified as EvaluatorTest
@@ -15,9 +14,8 @@ main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
   spec <- traverse (\comp -> Utils.runTestEff comp) specs
-  defaultMainWithIngredients
-    [Reporter.ingredient]
-    $ testGroup
+  defaultMain $
+    testGroup
       "Confer Tests"
       spec
 
