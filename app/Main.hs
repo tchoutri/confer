@@ -36,6 +36,7 @@ data Options = Options
   , mDeploymentArch :: Maybe DeploymentArchitecture
   , mDeploymentOs :: Maybe DeploymentOS
   , mDeploymentHostname :: Maybe Text
+  , pretty :: Bool
   , cliCommand :: Command
   }
   deriving stock (Show, Eq)
@@ -90,6 +91,7 @@ parseOptions =
       (option deploymentOsOption (long "os" <> metavar "OS" <> help "Override the detected operating system "))
     <*> optional
       (option str (long "hostname" <> metavar "HOSTNAME" <> help "Override the detected host name"))
+    <*> switch (long "pretty" <> help "Enable pretty output on the console")
     <*> parseCommand
 
 parseCommand :: Parser Command
@@ -111,7 +113,7 @@ runOptions
      )
   => Options
   -> Eff es ()
-runOptions (Options dryRun verbose configurationFile mArch mOs mHostname Check) = do
+runOptions (Options dryRun verbose configurationFile mArch mOs mHostname isPretty Check) = do
   deploymentArch <- determineDeploymentArch verbose mArch
   deploymentOS <- determineDeploymentOS verbose mOs
   deployments <-
@@ -133,7 +135,7 @@ runOptions (Options dryRun verbose configurationFile mArch mOs mHostname Check) 
       case result of
         Left symlinkError -> Error.throwError (SymlinkErrors (NE.singleton symlinkError))
         Right a -> pure a
-runOptions (Options dryRun verbose configurationFile mArch mOs mHostname Deploy) = do
+runOptions (Options dryRun verbose configurationFile mArch mOs mHostname isPretty Deploy) = do
   deploymentArch <- determineDeploymentArch verbose mArch
   deploymentOS <- determineDeploymentOS verbose mOs
   deployments <- processConfiguration verbose configurationFile deploymentArch deploymentOS mHostname
