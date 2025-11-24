@@ -5,8 +5,7 @@ module Confer.Config.Evaluator
   , adjustConfiguration
   ) where
 
-import Control.Monad (void, when)
-
+import Control.Monad (void, unless)
 import Data.Maybe (isNothing)
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -58,23 +57,19 @@ loadConfiguration
   => Bool
   -> OsPath
   -> Eff es (Either String (Vector Deployment))
-loadConfiguration verbose pathToConfigFile = do
+loadConfiguration quiet pathToConfigFile = do
   userModule <- API.mkUserModule
   hostModule <- API.mkHostModule
   liftIO $ Lua.run $ do
     Lua.openlibs -- load the default Lua packages
     let conferLua = $(embedFile "runtime/lua/confer.lua")
-    -- when verbose $
-    --   liftIO $
-    --     Text.putStrLn $
-    --       "Loading " <> Text.pack conferLuaFilePath
     Lua.dostring conferLua
     Lua.setglobal "confer"
     Lua.registerModule Lua.System.documentedModule
     Lua.registerModule userModule
     Lua.registerModule hostModule
     configFilePath <- liftIO $ OsPath.decodeFS pathToConfigFile
-    when verbose $
+    unless quiet $
       liftIO $
         Text.putStrLn $
           "Loading " <> Text.pack configFilePath

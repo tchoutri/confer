@@ -30,7 +30,7 @@ deploy
   => Bool
   -> Vector Deployment
   -> Eff es ()
-deploy verbose deployments = do
+deploy quiet deployments = do
   forM_ deployments $ \d ->
     forM_ d.facts $ \fact -> do
       filepath <- liftIO $ OsPath.decodeFS fact.destination
@@ -38,10 +38,10 @@ deploy verbose deployments = do
       if destinationPathExists
         then do
           destination <- liftIO $ OsPath.decodeFS fact.destination
-          liftIO $ Text.putStrLn $ display destination <> " already exists."
+          liftIO $ Text.putStrLn $ display destination <> " ✅"
         else do
           createSymlink fact.source fact.destination
-          when verbose $ do
+          unless quiet $ do
             liftIO $
               Text.putStrLn $
                 "[🔗] " <> display fact

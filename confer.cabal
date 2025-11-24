@@ -85,6 +85,7 @@ library
     Confer.CLI.Cmd.Check
     Confer.CLI.Cmd.Deploy
     Confer.CLI.Errors
+    Confer.CLI.UI
     Confer.Config.ConfigFile
     Confer.Config.Evaluator
     Confer.Config.Types
@@ -95,6 +96,7 @@ library
   build-depends:
     aeson,
     base,
+    bytestring,
     containers,
     directory,
     effectful,

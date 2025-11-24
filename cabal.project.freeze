@@ -65,8 +65,8 @@ constraints: any.OneTuple ==0.4.2,
              any.integer-conversion ==0.1.1,
              any.integer-logarithms ==1.0.4,
              integer-logarithms -check-bounds +integer-gmp,
-             any.layoutz ==0.1.0.0,
-             any.lua ==2.3.3,
+             any.layoutz ==0.1.1.0,
+             any.lua ==2.3.4,
              lua +allow-unsafe-gc -apicheck -cross-compile +export-dynamic -lua_32bits -pkg-config -system-lua,
              any.monad-control ==1.0.3.1,
              any.mtl ==2.3.1,
@@ -133,4 +133,4 @@ constraints: any.OneTuple ==0.4.2,
              vector +boundschecks -internalchecks -unsafechecks -wall,
              any.vector-stream ==0.1.0.1,
              any.witherable ==0.5
-index-state: hackage.haskell.org 2025-10-21T14:26:30Z
+index-state: hackage.haskell.org 2025-11-21T11:51:26Z

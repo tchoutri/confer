@@ -4,7 +4,7 @@ module Confer.Config.ConfigFile
   , determineDeploymentArch
   ) where
 
-import Control.Monad (when)
+import Control.Monad (unless, when)
 
 import Data.Text qualified as Text
 import Data.Text.Display
@@ -36,7 +36,7 @@ processConfiguration
      , Error CLIError :> es
      )
   => Bool
-  -- ^ Verbose
+  -- ^ Quiet
   -> Maybe OsPath
   -- ^ Potential configuration file path
   -> DeploymentArchitecture
@@ -46,20 +46,20 @@ processConfiguration
   -> Maybe Text
   -- ^ hostname override
   -> Eff es (Vector Deployment)
-processConfiguration verbose mConfigurationFilePath deploymentArch deploymentOS mHostname = do
+processConfiguration quiet mConfigurationFilePath deploymentArch deploymentOS mHostname = do
   pathToConfigFile <- determineConfigurationFilePath mConfigurationFilePath
-  loadConfiguration verbose pathToConfigFile >>= \case
+  loadConfiguration quiet pathToConfigFile >>= \case
     Right allDeployments -> do
       currentHost <- case mHostname of
         Nothing -> do
           inferredHostname <- Text.pack <$> liftIO getHostName
-          when verbose $
+          unless quiet $
             liftIO $
               Text.putStrLn $
                 "Hostname: " <> display inferredHostname <> " (detected)"
           pure inferredHostname
         Just overridenHostname -> do
-          when verbose $
+          unless quiet $
             liftIO $
               Text.putStrLn $
                 "Hostname: " <> display overridenHostname <> " (overriden)"
@@ -101,19 +101,19 @@ determineConfigurationFilePath mCLIConfigFilePath =
 determineDeploymentOS
   :: IOE :> es
   => Bool
-  -- ^ Verbose mode
+  -- ^ quiet mode
   -> Maybe DeploymentOS
   -- Potential override
   -> Eff es DeploymentOS
 -- Final result
-determineDeploymentOS verbose = \case
+determineDeploymentOS quiet = \case
   Nothing -> do
     let inferredOS = OS (Text.pack System.os)
-    when verbose $ do
+    unless quiet $ do
       liftIO $ Text.putStrLn $ "OS: " <> display inferredOS <> " (detected)"
     pure inferredOS
   Just overridenOS -> do
-    when verbose $
+    unless quiet $
       liftIO $
         Text.putStrLn $
           "OS: " <> display overridenOS <> " (overriden)"
@@ -122,19 +122,19 @@ determineDeploymentOS verbose = \case
 determineDeploymentArch
   :: IOE :> es
   => Bool
-  -- ^ Verbose mode
+  -- ^ quiet mode
   -> Maybe DeploymentArchitecture
   -- Potential override
   -> Eff es DeploymentArchitecture
 -- Final result
-determineDeploymentArch verbose = \case
+determineDeploymentArch quiet = \case
   Nothing -> do
     let inferredArch = Arch (Text.pack System.arch)
-    when verbose $ do
+    unless quiet $ do
       liftIO $ Text.putStrLn $ "Architecture: " <> display inferredArch <> " (detected)"
     pure inferredArch
   Just overridenArch -> do
-    when verbose $
+    unless quiet $
       liftIO $
         Text.putStrLn $
           "Architecture: " <> display overridenArch <> " (overriden)"
