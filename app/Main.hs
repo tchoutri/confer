@@ -10,6 +10,8 @@ import Data.Text qualified as Text
 import Data.Version (showVersion)
 import Development.GitRev
 import Effectful
+import Effectful.Concurrent
+import Effectful.Console.ByteString
 import Effectful.Error.Static
 import Effectful.Error.Static qualified as Error
 import Effectful.FileSystem
@@ -31,12 +33,11 @@ import Confer.Effect.Symlink
 
 data Options = Options
   { dryRun :: Bool
-  , verbose :: Bool
+  , quiet :: Bool
   , configurationFile :: Maybe OsPath
   , mDeploymentArch :: Maybe DeploymentArchitecture
   , mDeploymentOs :: Maybe DeploymentOS
   , mDeploymentHostname :: Maybe Text
-  , pretty :: Bool
   , cliCommand :: Command
   }
   deriving stock (Show, Eq)
@@ -63,6 +64,8 @@ main = do
     runOptions parseResult
       & runFileSystem
       & runErrorNoCallStack
+      & runConsole
+      & runConcurrent
       & runEff
   case result of
     Right _ -> pure ()
@@ -82,7 +85,7 @@ parseOptions =
   Options
     <$> switch
       (long "dry-run" <> help "Do not perform actual file system operations")
-    <*> switch (long "verbose" <> help "Make the program more talkative")
+    <*> switch (long "quiet" <> help "Make the program less talkative")
     <*> optional
       (option osPathOption (long "deployments-file" <> metavar "FILE" <> help "Use the specified deployments.lua file"))
     <*> optional
@@ -91,7 +94,6 @@ parseOptions =
       (option deploymentOsOption (long "os" <> metavar "OS" <> help "Override the detected operating system "))
     <*> optional
       (option str (long "hostname" <> metavar "HOSTNAME" <> help "Override the detected host name"))
-    <*> switch (long "pretty" <> help "Enable pretty output on the console")
     <*> parseCommand
 
 parseCommand :: Parser Command
@@ -110,42 +112,45 @@ runOptions
   :: ( IOE :> es
      , Error CLIError :> es
      , FileSystem :> es
+     , Console :> es
+     , Concurrent :> es
      )
   => Options
   -> Eff es ()
-runOptions (Options dryRun verbose configurationFile mArch mOs mHostname isPretty Check) = do
-  deploymentArch <- determineDeploymentArch verbose mArch
-  deploymentOS <- determineDeploymentOS verbose mOs
+runOptions (Options dryRun quiet configurationFile mArch mOs mHostname Check) = do
+  deploymentArch <- determineDeploymentArch quiet mArch
+  deploymentOS <- determineDeploymentOS quiet mOs
   deployments <-
     processConfiguration
-      verbose
+      quiet
       configurationFile
       deploymentArch
       deploymentOS
       mHostname
   if dryRun
     then
-      Cmd.check verbose deployments
+      Cmd.check quiet deployments
         & runSymlinkPure Map.empty
     else do
       result <-
-        Cmd.check verbose deployments
+        Cmd.check quiet deployments
           & runSymlinkIO
           & runErrorNoCallStack
+          & runConsole
       case result of
         Left symlinkError -> Error.throwError (SymlinkErrors (NE.singleton symlinkError))
         Right a -> pure a
-runOptions (Options dryRun verbose configurationFile mArch mOs mHostname isPretty Deploy) = do
-  deploymentArch <- determineDeploymentArch verbose mArch
-  deploymentOS <- determineDeploymentOS verbose mOs
-  deployments <- processConfiguration verbose configurationFile deploymentArch deploymentOS mHostname
+runOptions (Options dryRun quiet configurationFile mArch mOs mHostname Deploy) = do
+  deploymentArch <- determineDeploymentArch quiet mArch
+  deploymentOS <- determineDeploymentOS quiet mOs
+  deployments <- processConfiguration quiet configurationFile deploymentArch deploymentOS mHostname
   if dryRun
     then
-      Cmd.deploy verbose deployments
+      Cmd.deploy quiet deployments
         & runSymlinkPure Map.empty
     else do
       result <-
-        Cmd.deploy verbose deployments
+        Cmd.deploy quiet deployments
           & runSymlinkIO
           & runErrorNoCallStack
       case result of
