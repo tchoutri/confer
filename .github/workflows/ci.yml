@@ -29,7 +29,7 @@ jobs:
       matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout base repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: "Install tools"
         run: |
             .github/workflows/install-tools.sh
@@ -97,7 +97,7 @@ jobs:
                 musl-dev ncurses-dev perl pkgconfig \
                 sudo tar upx xz zlib-dev zlib-static
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: haskell-actions/setup@v2
         id: setup-haskell
