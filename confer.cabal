@@ -133,6 +133,7 @@ executable confer
     effectful,
     effectful-core,
     filepath,
+    gitrev,
     optparse-applicative,
     text,
 
