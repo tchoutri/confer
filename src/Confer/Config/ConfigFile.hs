@@ -6,6 +6,8 @@ module Confer.Config.ConfigFile
 
 import Control.Monad (unless, when)
 
+import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as Text
 import Data.Text.Display
 import Data.Text.IO qualified as Text
@@ -33,7 +35,7 @@ import Data.Text (Text)
 processConfiguration
   :: ( IOE :> es
      , FileSystem :> es
-     , Error CLIError :> es
+     , Error (NonEmpty CLIError) :> es
      )
   => Bool
   -- ^ Quiet
@@ -73,12 +75,16 @@ processConfiguration quiet mConfigurationFilePath deploymentArch deploymentOS mH
               allDeployments
       when (Vector.null deployments) $
         throwError $
-          NoDeploymentsAvailable deploymentOS deploymentArch currentHost
+          NE.singleton $
+            noDeploymentsAvailableError deploymentOS deploymentArch currentHost
       pure deployments
     Left e -> error e
 
 determineConfigurationFilePath
-  :: (IOE :> es, FileSystem :> es, Error CLIError :> es)
+  :: ( IOE :> es
+     , FileSystem :> es
+     , Error (NonEmpty CLIError) :> es
+     )
   => Maybe OsPath
   -> Eff es OsPath
 determineConfigurationFilePath mCLIConfigFilePath =
@@ -87,13 +93,13 @@ determineConfigurationFilePath mCLIConfigFilePath =
       filePath <- liftIO $ OsPath.decodeFS osPath
       FileSystem.doesFileExist filePath
         >>= \case
-          False -> throwError $ NoUserProvidedConfigurationFile osPath
+          False -> throwError $ NE.singleton $ noUserProvidedConfigurationFileError osPath
           True -> pure osPath
     Nothing ->
       do
         FileSystem.doesFileExist "deployments.lua"
         >>= \case
-          False -> throwError NoDefaultConfigurationFile
+          False -> throwError $ NE.singleton noDefaultConfigurationFileError
           True ->
             FileSystem.makeAbsolute "deployments.lua"
               >>= (liftIO . OsPath.encodeFS)

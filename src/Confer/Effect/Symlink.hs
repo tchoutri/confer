@@ -41,7 +41,7 @@ data SymlinkError
       -- ^ Expected target
       OsPath
       -- ^ Actual target
-  deriving stock (Show, Eq)
+  deriving stock (Show, Ord, Eq)
 
 data Symlink :: Effect where
   CreateSymlink :: OsPath -> OsPath -> Symlink m ()
