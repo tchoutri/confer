@@ -27,8 +27,8 @@ Simulate the actions to be executed but doesn't do them.
 #### `--deployments-file`
 Use the specified deployments.lua file
 
-#### `--verbose`
-Make the execution more verbose about what it does.
+#### `--quiet`
+Make the execution less verbose about what it does.
 
 #### `--version`
 Display the version of the tool.
