@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Main where
 
 import Data.Function ((&))
@@ -6,6 +8,7 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Version (showVersion)
+import Development.GitRev
 import Effectful
 import Effectful.Error.Static
 import Effectful.Error.Static qualified as Error
@@ -42,11 +45,15 @@ data Command
   | Deploy
   deriving stock (Show, Eq)
 
+programVersion :: String
+programVersion =
+  "confer version " <> showVersion version <> " (commit " <> $(gitHash) <> ")"
+
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
   let opts =
-        info (parseOptions <**> simpleVersioner (showVersion version) <**> helper) $
+        info (parseOptions <**> simpleVersioner programVersion <**> helper) $
           header "confer – The dotfiles manager"
             <> progDescDoc (Just programDescription)
             <> footerDoc (Just programFooter)
@@ -157,14 +164,12 @@ osPathOption = maybeReader OsPath.encodeUtf
 
 deploymentOsOption :: ReadM DeploymentOS
 deploymentOsOption = maybeReader $
-  \string ->
-    case string of
-      "all" -> Just AllOS
-      os -> Just $ OS (Text.pack os)
+  \case
+    "all" -> Just AllOS
+    os -> Just $ OS (Text.pack os)
 
 deploymentArchOption :: ReadM DeploymentArchitecture
 deploymentArchOption = maybeReader $
-  \string ->
-    case string of
-      "all" -> Just AllArchs
-      arch -> Just $ Arch (Text.pack arch)
+  \case
+    "all" -> Just AllArchs
+    arch -> Just $ Arch (Text.pack arch)
