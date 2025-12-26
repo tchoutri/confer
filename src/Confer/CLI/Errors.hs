@@ -1,10 +1,26 @@
-module Confer.CLI.Errors where
+module Confer.CLI.Errors
+  ( CLIErrorType (..)
+  , CLIError
+  , noDefaultConfigurationFileError
+  , noUserProvidedConfigurationFileError
+  , noDeploymentsAvailableError
+  , symlinkDoesNotExistError
+  , symlinkAlreadyExistsError
+  , pathIsNotSymlinkError
+  , wrongTargetError
+  , reportError
+  , toCliError
+  ) where
 
+import Control.Monad.IO.Class (liftIO)
+import Data.Foldable
 import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Display
 import Data.Text.IO qualified as Text
+import Data.Word (Word8)
 import System.Exit qualified as System
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
@@ -12,16 +28,13 @@ import System.OsPath qualified as OsPath
 import Confer.Config.Types
 import Confer.Effect.Symlink (SymlinkError (..))
 import Confer.Effect.Symlink qualified as Symlink
-import Control.Monad.IO.Class (liftIO)
-import Data.Foldable
-import Data.Word (Word8)
 
-data CLIError
+data CLIErrorType
   = NoDefaultConfigurationFile
-  | NoUserProvidedConfigurationFile OsPath
-  | NoDeploymentsAvailable DeploymentOS DeploymentArchitecture Text
-  | SymlinkErrors (NonEmpty SymlinkError)
-  deriving stock (Eq, Show)
+  | NoUserProvidedConfigurationFile
+  | NoDeploymentsAvailable
+  | SymlinkErrorType SymlinkError
+  deriving stock (Eq, Ord, Show)
 
 newtype ErrorCode = ErrorCode Word8
   deriving newtype (Eq, Show, Ord)
@@ -29,63 +42,97 @@ newtype ErrorCode = ErrorCode Word8
 instance Display ErrorCode where
   displayBuilder (ErrorCode c) = "[CONFER-" <> displayBuilder c <> "]"
 
-cliErrorToCode :: CLIError -> ErrorCode
-cliErrorToCode = \case
-  NoDefaultConfigurationFile -> ErrorCode 156
-  NoUserProvidedConfigurationFile{} -> ErrorCode 169
-  NoDeploymentsAvailable{} -> ErrorCode 123
-  SymlinkErrors{} -> ErrorCode 000
+data CLIError = CLIError
+  { errorType :: CLIErrorType
+  , errorCode :: ErrorCode
+  , errorMessage :: Text
+  }
+  deriving stock (Eq, Ord, Show)
 
-symlinkErrorToCode :: SymlinkError -> ErrorCode
-symlinkErrorToCode = \case
-  DoesNotExist{} -> ErrorCode 234
-  AlreadyExists{} -> ErrorCode 205
-  IsNotSymlink{} -> ErrorCode 142
-  WrongTarget{} -> ErrorCode 102
+instance Display CLIError where
+  displayBuilder cliError = displayBuilder cliError.errorCode <> " " <> displayBuilder cliError.errorMessage
 
-reportError :: CLIError -> IO ()
-reportError NoDefaultConfigurationFile =
-  System.die $ Text.unpack $ display (cliErrorToCode NoDefaultConfigurationFile) <> " Could not find configuration file at ./deployments.lua"
-reportError e@(NoUserProvidedConfigurationFile osPath) = do
-  filePath <- OsPath.decodeFS osPath
-  System.die $ Text.unpack $ display (cliErrorToCode e) <> " Could not find configuration file at" <> Text.pack filePath
-reportError e@(NoDeploymentsAvailable os arch hostname) = do
-  let message =
-        display (cliErrorToCode e)
-          <> " Could not find deployments to run on "
+toCliError :: SymlinkError -> CLIError
+toCliError = \case
+  DoesNotExist path -> symlinkDoesNotExistError path
+  IsNotSymlink path -> pathIsNotSymlinkError path
+  AlreadyExists path -> symlinkAlreadyExistsError path
+  WrongTarget link expected actual -> wrongTargetError link expected actual
+
+noDefaultConfigurationFileError :: CLIError
+noDefaultConfigurationFileError =
+  CLIError
+    { errorType = NoDefaultConfigurationFile
+    , errorCode = ErrorCode 156
+    , errorMessage = "Could not find configuration file at ./deployments.lua"
+    }
+
+noUserProvidedConfigurationFileError :: OsPath -> CLIError
+noUserProvidedConfigurationFileError path =
+  CLIError
+    { errorType = NoUserProvidedConfigurationFile
+    , errorCode = ErrorCode 169
+    , errorMessage = "Could not find configuration file at" <> Text.show path
+    }
+
+noDeploymentsAvailableError :: DeploymentOS -> DeploymentArchitecture -> Text -> CLIError
+noDeploymentsAvailableError os arch hostname =
+  CLIError
+    { errorType = NoDeploymentsAvailable
+    , errorCode = ErrorCode 123
+    , errorMessage =
+        " Could not find deployments to run on "
           <> display arch
           <> "-"
           <> display os
           <> " "
           <> hostname
-  System.die $ Text.unpack message
-reportError (SymlinkErrors errors) = do
-  forM_ errors $
-    \err ->
-      liftIO $ Text.putStrLn $ formatSymlinkError err
-  System.exitFailure
+    }
 
-formatSymlinkError :: SymlinkError -> Text
-formatSymlinkError e@(DoesNotExist path) =
-  display (symlinkErrorToCode e)
-    <> " "
-    <> display (Text.pack . show $ path)
-    <> " does not exist"
-formatSymlinkError e@(IsNotSymlink path) =
-  display (symlinkErrorToCode e)
-    <> " "
-    <> display (Text.pack . show $ path)
-    <> " is not a symbolic link"
-formatSymlinkError e@(AlreadyExists path) =
-  display (symlinkErrorToCode e)
-    <> " "
-    <> display (Text.pack . show $ path)
-    <> " already exists"
-formatSymlinkError e@(WrongTarget linkPath expectedTarget actualTarget) =
-  display (symlinkErrorToCode e)
-    <> " "
-    <> display (Text.pack . show $ linkPath)
-    <> " points to "
-    <> display (Text.pack . show $ actualTarget)
-    <> " instead of pointing to "
-    <> display (Text.pack . show $ expectedTarget)
+symlinkDoesNotExistError :: OsPath -> CLIError
+symlinkDoesNotExistError path =
+  CLIError
+    { errorType = SymlinkErrorType (DoesNotExist path)
+    , errorCode = ErrorCode 234
+    , errorMessage = Text.show path <> " does not exist"
+    }
+
+symlinkAlreadyExistsError :: OsPath -> CLIError
+symlinkAlreadyExistsError path =
+  CLIError
+    { errorType = SymlinkErrorType (AlreadyExists path)
+    , errorCode = ErrorCode 205
+    , errorMessage = Text.show path <> " already exists"
+    }
+
+pathIsNotSymlinkError :: OsPath -> CLIError
+pathIsNotSymlinkError path =
+  CLIError
+    { errorType = SymlinkErrorType (IsNotSymlink path)
+    , errorCode = ErrorCode 142
+    , errorMessage = Text.show path <> " is not a symbolic link"
+    }
+
+wrongTargetError
+  :: OsPath
+  -- ^ link path
+  -> OsPath
+  -- ^  expected target
+  -> OsPath
+  -- ^ actual target
+  -> CLIError
+wrongTargetError linkPath expectedTarget actualTarget =
+  CLIError
+    { errorType = SymlinkErrorType (WrongTarget linkPath expectedTarget actualTarget)
+    , errorCode = ErrorCode 102
+    , errorMessage =
+        display (Text.show linkPath)
+          <> " points to "
+          <> display (Text.show actualTarget)
+          <> " instead of pointing to "
+          <> display (Text.show expectedTarget)
+    }
+
+reportError :: CLIError -> IO ()
+reportError cliError =
+  Text.putStrLn $ display cliError

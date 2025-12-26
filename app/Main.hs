@@ -2,7 +2,9 @@
 
 module Main where
 
+import Data.Foldable
 import Data.Function ((&))
+import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
@@ -19,6 +21,7 @@ import Options.Applicative
 import Options.Applicative.Help.Pretty
 import Options.Applicative.Types
 import Paths_confer (version)
+import System.Exit qualified as System
 import System.IO
 import System.OsPath
 import System.OsPath qualified as OsPath
@@ -63,13 +66,15 @@ main = do
   result <-
     runOptions parseResult
       & runFileSystem
-      & runErrorNoCallStack
+      & runErrorNoCallStack @_
       & runConsole
       & runConcurrent
       & runEff
   case result of
     Right _ -> pure ()
-    Left e -> reportError e
+    Left errors -> do
+      traverse_ @NonEmpty reportError errors
+      System.exitFailure
 
 programDescription :: Doc
 programDescription = "Confer handles the deployment and synchronisation of your configuration files."
@@ -110,7 +115,7 @@ parseDeploy = pure Deploy
 
 runOptions
   :: ( IOE :> es
-     , Error CLIError :> es
+     , Error (NonEmpty CLIError) :> es
      , FileSystem :> es
      , Console :> es
      , Concurrent :> es
@@ -135,10 +140,10 @@ runOptions (Options dryRun quiet configurationFile mArch mOs mHostname Check) = 
       result <-
         Cmd.check quiet deployments
           & runSymlinkIO
-          & runErrorNoCallStack
+          & runErrorNoCallStack @SymlinkError
           & runConsole
       case result of
-        Left symlinkError -> Error.throwError (SymlinkErrors (NE.singleton symlinkError))
+        Left symlinkError -> Error.throwError $ NE.singleton (toCliError symlinkError)
         Right a -> pure a
 runOptions (Options dryRun quiet configurationFile mArch mOs mHostname Deploy) = do
   deploymentArch <- determineDeploymentArch quiet mArch
@@ -152,9 +157,9 @@ runOptions (Options dryRun quiet configurationFile mArch mOs mHostname Deploy) =
       result <-
         Cmd.deploy quiet deployments
           & runSymlinkIO
-          & runErrorNoCallStack
+          & runErrorNoCallStack @SymlinkError
       case result of
-        Left symlinkError -> Error.throwError (SymlinkErrors (NE.singleton symlinkError))
+        Left symlinkError -> Error.throwError (NE.singleton $ toCliError symlinkError)
         Right a -> pure a
 
 withInfo :: Parser a -> String -> ParserInfo a

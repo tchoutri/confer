@@ -15,7 +15,7 @@ import Effectful.Error.Static qualified as Error
 import GHC.Float
 import Validation
 
-import Confer.CLI.Errors (CLIError (..))
+import Confer.CLI.Errors
 import Confer.CLI.UI
 import Confer.Config.Types
 import Confer.Effect.Symlink (Symlink, SymlinkError (..))
@@ -23,7 +23,7 @@ import Confer.Effect.Symlink qualified as Symlink
 
 check
   :: ( Symlink :> es
-     , Error CLIError :> es
+     , Error (NonEmpty CLIError) :> es
      , Console :> es
      , Concurrent :> es
      )
@@ -41,7 +41,7 @@ check quiet deployments = do
         validateSymlink fact
   case result of
     Failure errors -> do
-      Error.throwError (SymlinkErrors errors)
+      Error.throwError (toCliError <$> errors)
     Success _ ->
       unless quiet $ printProgress "Checking links" 1.0
 
