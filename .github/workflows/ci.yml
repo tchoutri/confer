@@ -159,7 +159,7 @@ jobs:
     needs: ['tests', 'build-alpine']
 
     steps:
-    - uses: actions/download-artifact@v6
+    - uses: actions/download-artifact@v7
       with:
         pattern: confer-*
         merge-multiple: true
