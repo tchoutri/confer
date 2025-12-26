@@ -77,7 +77,7 @@ jobs:
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
 
       - name: Upload the confer-head executable
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: confer-${{ runner.os }}-${{ env.ARCH }}
           path: ${{ env.CONFER_EXEC_TAR }}
@@ -147,7 +147,7 @@ jobs:
           echo CONFER_EXEC_TAR=$CONFER_EXEC_TAR >> $GITHUB_ENV
 
       - name: Upload confer executable to workflow artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: confer-${{ runner.os }}-static-x86_64
           path: ${{ env.CONFER_EXEC_TAR }}
