@@ -35,16 +35,15 @@ check quiet deployments = do
     mconcat . Vector.toList <$> do
       let facts :: Vector Fact = foldMap (.facts) deployments
       Vector.iforM facts $ \index fact -> do
-        let percentage = (int2Double index / (int2Double $ Vector.length facts))
+        let percentage = int2Double index / int2Double (Vector.length facts)
         threadDelay 30_000
         unless quiet $ printProgress "Checking links" percentage
         validateSymlink fact
   case result of
     Failure errors -> do
       Error.throwError (SymlinkErrors errors)
-    Success _ -> do
+    Success _ ->
       unless quiet $ printProgress "Checking links" 1.0
-      pure ()
 
 validateSymlink
   :: Symlink :> es

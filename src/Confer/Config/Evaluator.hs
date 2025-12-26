@@ -5,7 +5,7 @@ module Confer.Config.Evaluator
   , adjustConfiguration
   ) where
 
-import Control.Monad (void, unless)
+import Control.Monad (unless, void)
 import Data.Maybe (isNothing)
 import Data.Text (Text)
 import Data.Text qualified as Text

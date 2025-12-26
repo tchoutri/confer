@@ -2,17 +2,21 @@ module Confer.CLI.Cmd.Deploy (deploy) where
 
 import Control.Monad
 
+import Data.List.NonEmpty qualified as NE
 import Data.Text.Display
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
 import Effectful
+import Effectful.Error.Static
 import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 
+import Confer.CLI.Errors
 import Confer.Config.Types
-import Confer.Effect.Symlink
+import Confer.Effect.Symlink (Symlink)
+import Confer.Effect.Symlink qualified as Symlink
 
 -- | Take a filtered and checked list of deployments.
 --
@@ -26,6 +30,7 @@ deploy
   :: ( FileSystem :> es
      , Symlink :> es
      , IOE :> es
+     , Error CLIError :> es
      )
   => Bool
   -> Vector Deployment
@@ -33,14 +38,18 @@ deploy
 deploy quiet deployments = do
   forM_ deployments $ \d ->
     forM_ d.facts $ \fact -> do
-      filepath <- liftIO $ OsPath.decodeFS fact.destination
-      destinationPathExists <- FileSystem.doesPathExist filepath
+      linkFilepath <- liftIO $ OsPath.decodeFS fact.destination
+      destinationPathExists <- FileSystem.doesPathExist linkFilepath
       if destinationPathExists
         then do
-          destination <- liftIO $ OsPath.decodeFS fact.destination
-          liftIO $ Text.putStrLn $ display destination <> " ✅"
+          result <- Symlink.testSymlink fact.destination fact.source
+          case result of
+            Left err ->
+              throwError $ SymlinkErrors (NE.singleton err)
+            Right _ ->
+              liftIO $ Text.putStrLn $ display (linkFilepath <> " ✅")
         else do
-          createSymlink fact.source fact.destination
+          Symlink.createSymlink fact.source fact.destination
           unless quiet $ do
             liftIO $
               Text.putStrLn $
