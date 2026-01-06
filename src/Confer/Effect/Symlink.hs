@@ -160,7 +160,7 @@ handleAlreadyExistingDestination sourcePath destinationPath = do
     metadata <- Directory.getFileMetadata destination
     pure $ Directory.fileTypeFromMetadata metadata
   destinationIsSymbolic <- liftIO $ Directory.pathIsSymbolicLink destinationPath
-  if destinationIsSymbolic
+  if not destinationIsSymbolic
     then do
       destinationTruePath <-
         liftIO $

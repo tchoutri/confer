@@ -7,14 +7,19 @@ import Data.List.NonEmpty qualified as NE
 import Data.Text.Display
 import Data.Text.IO qualified as Text
 import Data.Vector (Vector)
+import Data.Vector qualified as Vector
 import Effectful
+import Effectful.Concurrent
+import Effectful.Console.ByteString
 import Effectful.Error.Static
 import Effectful.FileSystem (FileSystem)
 import Effectful.FileSystem qualified as FileSystem
+import GHC.Float
 import System.OsPath (OsPath)
 import System.OsPath qualified as OsPath
 
 import Confer.CLI.Errors
+import Confer.CLI.UI
 import Confer.Config.Types
 import Confer.Effect.Symlink (Symlink, SymlinkError (..))
 import Confer.Effect.Symlink qualified as Symlink
@@ -31,32 +36,34 @@ deploy
   :: ( FileSystem :> es
      , Symlink :> es
      , IOE :> es
+     , Console :> es
+     , Concurrent :> es
      , Error (NonEmpty CLIError) :> es
      )
   => Bool
   -> Vector Deployment
   -> Eff es ()
 deploy quiet deployments = do
-  forM_ deployments $ \d ->
-    forM_ d.facts $ \fact -> do
-      linkFilepath <- liftIO $ OsPath.decodeFS fact.destination
-      destinationPathExists <- FileSystem.doesPathExist linkFilepath
-      if destinationPathExists
-        then do
-          result <- Symlink.testSymlink fact.destination fact.source
-          case result of
-            Left symlinkError -> do
-              let cliError = case symlinkError of
-                    DoesNotExist path -> symlinkDoesNotExistError path
-                    IsNotSymlink path -> pathIsNotSymlinkError path
-                    AlreadyExists path -> symlinkAlreadyExistsError path
-                    WrongTarget link expected actual -> wrongTargetError link expected actual
-              throwError (NE.singleton cliError)
-            Right _ ->
-              liftIO $ Text.putStrLn $ display (linkFilepath <> " ✅")
-        else do
-          Symlink.createSymlink fact.source fact.destination
-          unless quiet $ do
-            liftIO $
-              Text.putStrLn $
-                "[🔗] " <> display fact
+  let facts = deployments >>= (.facts)
+  Vector.iforM facts $ \index fact -> do
+    threadDelay 30_000
+    let percentage = int2Double index / int2Double (Vector.length facts)
+    unless quiet $ printProgress "Deploying" percentage
+    linkFilepath <- liftIO $ OsPath.decodeFS fact.destination
+    destinationPathExists <- FileSystem.doesPathExist linkFilepath
+    if destinationPathExists
+      then do
+        result <- Symlink.testSymlink fact.destination fact.source
+        case result of
+          Left symlinkError -> do
+            let cliError = case symlinkError of
+                  DoesNotExist path -> symlinkDoesNotExistError path
+                  AlreadyExists path -> symlinkAlreadyExistsError path
+                  IsNotSymlink path -> pathIsNotSymlinkError path
+                  WrongTarget link expected actual -> wrongTargetError link expected actual
+            throwError (NE.singleton cliError)
+          Right _ -> pure ()
+      else do
+        Symlink.createSymlink fact.source fact.destination
+
+  unless quiet $ printProgress "Deploying" 1.0

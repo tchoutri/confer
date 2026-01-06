@@ -64,7 +64,7 @@ noDefaultConfigurationFileError =
   CLIError
     { errorType = NoDefaultConfigurationFile
     , errorCode = ErrorCode 156
-    , errorMessage = "Could not find configuration file at ./deployments.lua"
+    , errorMessage = "Could not find configuration file at ./deployments.lua."
     }
 
 noUserProvidedConfigurationFileError :: OsPath -> CLIError
@@ -72,7 +72,7 @@ noUserProvidedConfigurationFileError path =
   CLIError
     { errorType = NoUserProvidedConfigurationFile
     , errorCode = ErrorCode 169
-    , errorMessage = "Could not find configuration file at" <> Text.show path
+    , errorMessage = "Could not find configuration file at" <> Text.show path <> "."
     }
 
 noDeploymentsAvailableError :: DeploymentOS -> DeploymentArchitecture -> Text -> CLIError
@@ -87,6 +87,7 @@ noDeploymentsAvailableError os arch hostname =
           <> display os
           <> " "
           <> hostname
+          <> "."
     }
 
 symlinkDoesNotExistError :: OsPath -> CLIError
@@ -94,7 +95,7 @@ symlinkDoesNotExistError path =
   CLIError
     { errorType = SymlinkErrorType (DoesNotExist path)
     , errorCode = ErrorCode 234
-    , errorMessage = Text.show path <> " does not exist"
+    , errorMessage = Text.show path <> " does not exist."
     }
 
 symlinkAlreadyExistsError :: OsPath -> CLIError
@@ -102,7 +103,7 @@ symlinkAlreadyExistsError path =
   CLIError
     { errorType = SymlinkErrorType (AlreadyExists path)
     , errorCode = ErrorCode 205
-    , errorMessage = Text.show path <> " already exists"
+    , errorMessage = Text.show path <> " already exists."
     }
 
 pathIsNotSymlinkError :: OsPath -> CLIError
@@ -110,7 +111,7 @@ pathIsNotSymlinkError path =
   CLIError
     { errorType = SymlinkErrorType (IsNotSymlink path)
     , errorCode = ErrorCode 142
-    , errorMessage = Text.show path <> " is not a symbolic link"
+    , errorMessage = Text.show path <> " already exists and is not a symbolic link."
     }
 
 wrongTargetError
