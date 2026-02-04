@@ -182,4 +182,4 @@ jobs:
       with:
         prerelease: true
         files: ./out/*
-        tag_name: print-api-head
+        tag_name: confer-head
